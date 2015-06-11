@@ -83,37 +83,24 @@ class UltrasoundProcessWidget(ScriptedLoadableModuleWidget):
     self.inputSelector2.setToolTip( "Select Ultrasound Model." )
     parametersFormLayout.addRow("Input U/S Model: ", self.inputSelector2)
 
-    #
-    # output imaging volume selector
-    #
-    self.outputSelector1 = slicer.qMRMLNodeComboBox()
-    self.outputSelector1.nodeTypes = ( ("vtkMRMLScalarVolumeNode"), "" )
-    self.outputSelector1.addAttribute( "vtkMRMLScalarVolumeNode", "LabelMap", 0 )
-    self.outputSelector1.selectNodeUponCreation = True
-    self.outputSelector1.addEnabled = True
-    self.outputSelector1.removeEnabled = True
-    self.outputSelector1.noneEnabled = True
-    self.outputSelector1.showHidden = False
-    self.outputSelector1.showChildNodeTypes = False
-    self.outputSelector1.setMRMLScene( slicer.mrmlScene )
-    self.outputSelector1.setToolTip( "Pick output imaging volume." )
-    parametersFormLayout.addRow("Output Imaging Volume: ", self.outputSelector1)
 
     #
     # output segmentation selector
     #
-    self.outputSelector2 = slicer.qMRMLNodeComboBox()
-    self.outputSelector2.nodeTypes = ( ("vtkMRMLScalarVolumeNode"), "" )
-    self.outputSelector2.addAttribute( "vtkMRMLScalarVolumeNode", "LabelMap", 1 ) # this one is a labelmap
-    self.outputSelector2.selectNodeUponCreation = True
-    self.outputSelector2.addEnabled = True
-    self.outputSelector2.removeEnabled = True
-    self.outputSelector2.noneEnabled = True
-    self.outputSelector2.showHidden = False
-    self.outputSelector2.showChildNodeTypes = False
-    self.outputSelector2.setMRMLScene( slicer.mrmlScene )
-    self.outputSelector2.setToolTip( "Pick output segmentation volume." )
-    parametersFormLayout.addRow("Output Segmentation: ", self.outputSelector2)
+    self.outputSelector1 = slicer.qMRMLNodeComboBox()
+    self.outputSelector1.nodeTypes = ( ("vtkMRMLScalarVolumeNode"), "" )
+    self.outputSelector1.addAttribute( "vtkMRMLScalarVolumeNode", "LabelMap", 1 ) # this one is a labelmap
+    self.outputSelector1.selectNodeUponCreation = True
+    self.outputSelector1.addEnabled = True
+    self.outputSelector1.removeEnabled = True
+    self.outputSelector1.renameEnabled = True
+    self.outputSelector1.baseName = "Output Label"
+    self.outputSelector1.noneEnabled = True
+    self.outputSelector1.showHidden = False
+    self.outputSelector1.showChildNodeTypes = False
+    self.outputSelector1.setMRMLScene( slicer.mrmlScene )
+    self.outputSelector1.setToolTip( "Pick output segmentation volume." )
+    parametersFormLayout.addRow("Output Segmentation: ", self.outputSelector1)
 
     #
     # Apply Button
@@ -136,11 +123,11 @@ class UltrasoundProcessWidget(ScriptedLoadableModuleWidget):
     pass
 
   def onSelect(self):
-    self.applyButton.enabled = self.inputSelector1.currentNode() and self.inputSelector2.currentNode() # why doesn't this work when I add output volume?
+    self.applyButton.enabled = True
 
   def onApplyButton(self):
     logic = UltrasoundProcessLogic()
-    logic.run(self.inputSelector1.currentNode(), self.inputSelector2.currentNode(), self.outputSelector1.currentNode(), self.outputSelector2.currentNode())
+    logic.run(self.inputSelector1.currentNode(), self.inputSelector2.currentNode(), self.outputSelector1.currentNode())
 
 #
 # UltrasoundProcessLogic
@@ -169,46 +156,43 @@ class UltrasoundProcessLogic(ScriptedLoadableModuleLogic):
       return False
     return True
 
-  def isValidInputOutputData(self, inputVolumeNode1, inputModelNode, outputVolumeNode1, outputVolumeNode2):
-    """Validates if the output is not the same as input
+  def isValidInputOutputData(self, inputVolumeNode1, inputModelNode, outputVolumeNode1):
+    """Validates if the inputs and outputs are defined correctly
     """
     if not (inputVolumeNode1 or inputModelNode):
       logging.debug('isValidInputOutputData failed: not all input nodes defined')
       return False
-    if not (outputVolumeNode1 or outputVolumeNode2):
+    if not outputVolumeNode1:
       logging.debug('isValidInputOutputData failed: not all output nodes defined')
       return False
-    if inputVolumeNode1.GetID()==outputVolumeNode2.GetID() :
+    if inputVolumeNode1.GetID()==outputVolumeNode1.GetID() :
       logging.debug('isValidInputOutputData failed: input volume and output segmentation is the same. Create a new segmentation volume for output to avoid this error.')
       return False
     return True
 
-  def run(self, inputVolume, inputModel, outputVolume, outputSegment):
+  def run(self, inputVolume, inputModel, outputSegment):
     """
     Run the actual algorithm
     """
 
-    if not self.isValidInputOutputData(inputVolume, inputModel, outputVolume, outputSegment):
+    if not self.isValidInputOutputData(inputVolume, inputModel, outputSegment):
       slicer.util.errorDisplay('Check that Inputs and Outputs are defined correctly.')
       return False
 
     logging.info('Processing started')
 
+    # Create inverting transform for U/S and capsule segmentations (maintains L/R but flips apex and base)
+    invert_transform = vtk.vtkMatrix4x4()
+    invert_transform.SetElement(2,2,-1) # put a -1 in 3rd entry of diagonal of matrix
+
+    # Apply transform to inputModel and inputVolume
+    inputVolume.ApplyTransformMatrix(invert_transform)
+    inputModel.ApplyTransformMatrix(invert_transform)
+
     # Use "Model to Label Map" module to convert from ultrasound segmented model to segmented label map
     cliParams = {'InputVolume': inputVolume.GetID(), 'surface': inputModel.GetID(), 'OutputVolume': outputSegment.GetID(), 'sampleDistance': 0.1, 'labelValue': 10}
     cliNode = slicer.cli.run(slicer.modules.modeltolabelmap, None, cliParams, wait_for_completion=True)
-
-    # Transform US volume and segmentation labelmap using [ 0 0 -1 0 ] linear transform (flips apex/base but maintains left/right)
-    # define inversion transform (currently have this as saved in filesystem, want to create it in the code)
-    invert_transform = slicer.util.loadTransform('/home/tjg17/SlicerPython/invert_transform.h5') # Want to make this more robust so not dependent on filesystem
-    # Run the resample scalar/vector/DWI volume module to create new output volumes
-    cliParams = {'InputVolume': inputVolume.GetID(), 'OutputVolume': outputVolume.GetID(), 'transformationFile': 'invert_transform.h5'}
-    cliNode = slicer.cli.run(slicer.modules.resamplescalarvectordwivolume, None, cliParams, wait_for_completion=True)
-    # Resample labelmap
-    cliParams = {'InputVolume': inputVolume.GetID(), 'OutputVolume': outputSegment.GetID(), 'transformationFile': 'invert_transform.h5'}
-    cliNode = slicer.cli.run(slicer.modules.resamplescalarvectordwivolume, None, cliParams, wait_for_completion=True)
-
-
+    
     logging.info('Processing completed')
 
     return True
