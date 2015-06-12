@@ -21,6 +21,11 @@ include(${Slicer_USE_FILE})
 add_subdirectory(UltrasoundProcess)
 add_subdirectory(T2Process)
 add_subdirectory(ListModuleParams)
+add_subdirectory(Distance Map Based Registration)
+add_subdirectory(DistanceMapBasedRegistration)
+add_subdirectory(Prostate Distance Map Registration)
+add_subdirectory(New Module)
+add_subdirectory(New Module)
 ## NEXT_MODULE
 
 #-----------------------------------------------------------------------------

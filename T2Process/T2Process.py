@@ -53,68 +53,81 @@ class T2ProcessWidget(ScriptedLoadableModuleWidget):
     parametersFormLayout = qt.QFormLayout(parametersCollapsibleButton)
 
     #
-    # input volume selector
+    # input T2 axial volume
     #
-    self.inputSelector = slicer.qMRMLNodeComboBox()
-    self.inputSelector.nodeTypes = ( ("vtkMRMLScalarVolumeNode"), "" )
-    self.inputSelector.addAttribute( "vtkMRMLScalarVolumeNode", "LabelMap", 0 )
-    self.inputSelector.selectNodeUponCreation = True
-    self.inputSelector.addEnabled = False
-    self.inputSelector.removeEnabled = False
-    self.inputSelector.noneEnabled = False
-    self.inputSelector.showHidden = False
-    self.inputSelector.showChildNodeTypes = False
-    self.inputSelector.setMRMLScene( slicer.mrmlScene )
-    self.inputSelector.setToolTip( "Pick the input to the algorithm." )
-    parametersFormLayout.addRow("Input Volume: ", self.inputSelector)
+    self.inputSelector1 = slicer.qMRMLNodeComboBox()
+    self.inputSelector1.nodeTypes = ( ("vtkMRMLScalarVolumeNode"), "" )
+    self.inputSelector1.addAttribute( "vtkMRMLScalarVolumeNode", "LabelMap", 0 )
+    self.inputSelector1.selectNodeUponCreation = True
+    self.inputSelector1.addEnabled = False
+    self.inputSelector1.removeEnabled = False
+    self.inputSelector1.noneEnabled = False
+    self.inputSelector1.showHidden = False
+    self.inputSelector1.showChildNodeTypes = False
+    self.inputSelector1.setMRMLScene( slicer.mrmlScene )
+    self.inputSelector1.setToolTip( "Select axial T2-MRI." )
+    parametersFormLayout.addRow("Input T2-MRI Volume: ", self.inputSelector1)
 
     #
-    # output volume selector
+    # input T2-MRI segmentation
     #
-    self.outputSelector = slicer.qMRMLNodeComboBox()
-    self.outputSelector.nodeTypes = ( ("vtkMRMLScalarVolumeNode"), "" )
-    self.outputSelector.addAttribute( "vtkMRMLScalarVolumeNode", "LabelMap", 0 )
-    self.outputSelector.selectNodeUponCreation = True
-    self.outputSelector.addEnabled = True
-    self.outputSelector.removeEnabled = True
-    self.outputSelector.noneEnabled = True
-    self.outputSelector.showHidden = False
-    self.outputSelector.showChildNodeTypes = False
-    self.outputSelector.setMRMLScene( slicer.mrmlScene )
-    self.outputSelector.setToolTip( "Pick the output to the algorithm." )
-    parametersFormLayout.addRow("Output Volume: ", self.outputSelector)
+    self.inputSelector2 = slicer.qMRMLNodeComboBox()
+    self.inputSelector2.nodeTypes = ( ("vtkMRMLScalarVolumeNode"), "" )
+    self.inputSelector2.addAttribute( "vtkMRMLScalarVolumeNode", "LabelMap", 1 )
+    self.inputSelector2.selectNodeUponCreation = True
+    self.inputSelector2.addEnabled = False
+    self.inputSelector2.removeEnabled = False
+    self.inputSelector2.noneEnabled = False
+    self.inputSelector2.showHidden = False
+    self.inputSelector2.showChildNodeTypes = False
+    self.inputSelector2.setMRMLScene( slicer.mrmlScene )
+    self.inputSelector2.setToolTip( "Select axial T2-MRI segmentation." )
+    parametersFormLayout.addRow("Input T2-MRI Segment: ", self.inputSelector2)
 
     #
-    # threshold value
+    # input ultrasound capsule VTK model
     #
-    self.imageThresholdSliderWidget = ctk.ctkSliderWidget()
-    self.imageThresholdSliderWidget.singleStep = 0.1
-    self.imageThresholdSliderWidget.minimum = -100
-    self.imageThresholdSliderWidget.maximum = 100
-    self.imageThresholdSliderWidget.value = 0.5
-    self.imageThresholdSliderWidget.setToolTip("Set threshold value for computing the output image. Voxels that have intensities lower than this value will set to zero.")
-    parametersFormLayout.addRow("Image threshold", self.imageThresholdSliderWidget)
+    self.inputSelector3 = slicer.qMRMLNodeComboBox()
+    self.inputSelector3.nodeTypes = ( ("vtkMRMLModelNode"), "" )
+    self.inputSelector3.selectNodeUponCreation = True
+    self.inputSelector3.addEnabled = False
+    self.inputSelector3.removeEnabled = False
+    self.inputSelector3.noneEnabled = False
+    self.inputSelector3.showHidden = False
+    self.inputSelector3.showChildNodeTypes = False
+    self.inputSelector3.setMRMLScene( slicer.mrmlScene )
+    self.inputSelector3.setToolTip( "Select Ultrasound Model." )
+    parametersFormLayout.addRow("Input U/S Model: ", self.inputSelector3)
+
 
     #
-    # check box to trigger taking screen shots for later use in tutorials
+    # output segmentation selector
     #
-    self.enableScreenshotsFlagCheckBox = qt.QCheckBox()
-    self.enableScreenshotsFlagCheckBox.checked = 0
-    self.enableScreenshotsFlagCheckBox.setToolTip("If checked, take screen shots for tutorials. Use Save Data to write them to disk.")
-    parametersFormLayout.addRow("Enable Screenshots", self.enableScreenshotsFlagCheckBox)
+    self.outputSelector1 = slicer.qMRMLNodeComboBox()
+    self.outputSelector1.nodeTypes = ( ("vtkMRMLScalarVolumeNode"), "" )
+    self.outputSelector1.addAttribute( "vtkMRMLScalarVolumeNode", "LabelMap", 1 ) # this one is a labelmap
+    self.outputSelector1.selectNodeUponCreation = True
+    self.outputSelector1.addEnabled = True
+    self.outputSelector1.removeEnabled = True
+    self.outputSelector1.renameEnabled = True
+    self.outputSelector1.baseName = "Output Label"
+    self.outputSelector1.noneEnabled = True
+    self.outputSelector1.showHidden = False
+    self.outputSelector1.showChildNodeTypes = False
+    self.outputSelector1.setMRMLScene( slicer.mrmlScene )
+    self.outputSelector1.setToolTip( "Pick output segmentation volume." )
+    parametersFormLayout.addRow("Output T2-MRI Segmentation: ", self.outputSelector1)
 
     #
     # Apply Button
     #
     self.applyButton = qt.QPushButton("Apply")
     self.applyButton.toolTip = "Run the algorithm."
-    self.applyButton.enabled = False
+    self.applyButton.enabled = True
     parametersFormLayout.addRow(self.applyButton)
 
     # connections
     self.applyButton.connect('clicked(bool)', self.onApplyButton)
-    self.inputSelector.connect("currentNodeChanged(vtkMRMLNode*)", self.onSelect)
-    self.outputSelector.connect("currentNodeChanged(vtkMRMLNode*)", self.onSelect)
 
     # Add vertical spacer
     self.layout.addStretch(1)
@@ -126,14 +139,11 @@ class T2ProcessWidget(ScriptedLoadableModuleWidget):
     pass
 
   def onSelect(self):
-    self.applyButton.enabled = self.inputSelector.currentNode() and self.outputSelector.currentNode()
+    self.applyButton.enabled = True
 
   def onApplyButton(self):
     logic = T2ProcessLogic()
-    enableScreenshotsFlag = self.enableScreenshotsFlagCheckBox.checked
-    imageThreshold = self.imageThresholdSliderWidget.value
-    logic.run(self.inputSelector.currentNode(), self.outputSelector.currentNode(), imageThreshold, enableScreenshotsFlag)
-
+    logic.run(self.inputSelector1.currentNode(), self.inputSelector2.currentNode(), self.inputSelector3.currentNode(), self.outputSelector1.currentNode())
 #
 # T2ProcessLogic
 #
@@ -161,75 +171,56 @@ class T2ProcessLogic(ScriptedLoadableModuleLogic):
       return False
     return True
 
-  def isValidInputOutputData(self, inputVolumeNode, outputVolumeNode):
+  def isValidInputData(self, inputVolumeNode1, inputVolumeNode2, inputModelNode):
+    """Validates that inputs are not the same
+    """
+    if not inputVolumeNode1:
+      logging.debug('isValidInputData failed: not all input volume nodes defined')
+      return False
+    if not inputVolumeNode2:
+      logging.debug('isValidInputData failed: not all input volume nodes defined')
+      return False
+    if not inputModelNode:
+      logging.debug('isValidInputData failed: no input model node defined')
+      return False
+    if inputVolumeNode1.GetID()==inputVolumeNode2.GetID():
+      logging.debug('isValidInputData failed: input volume nodes are the same. Select a new volume to avoid this error.')
+      return False
+    return True
+
+  def isValidInputOutputData(self, inputVolumeNode1, inputVolumeNode2, outputVolumeNode):
     """Validates if the output is not the same as input
     """
-    if not inputVolumeNode:
-      logging.debug('isValidInputOutputData failed: no input volume node defined')
+    if inputVolumeNode1.GetID()==outputVolumeNode.GetID():
+      logging.debug('isValidInputOutputData failed: input and output volume is the same. Create a new volume for output to avoid this error.')
       return False
-    if not outputVolumeNode:
-      logging.debug('isValidInputOutputData failed: no output volume node defined')
-      return False
-    if inputVolumeNode.GetID()==outputVolumeNode.GetID():
+    if inputVolumeNode1.GetID()==outputVolumeNode.GetID():
       logging.debug('isValidInputOutputData failed: input and output volume is the same. Create a new volume for output to avoid this error.')
       return False
     return True
 
-  def takeScreenshot(self,name,description,type=-1):
-    # show the message even if not taking a screen shot
-    slicer.util.delayDisplay('Take screenshot: '+description+'.\nResult is available in the Annotations module.', 3000)
-
-    lm = slicer.app.layoutManager()
-    # switch on the type to get the requested window
-    widget = 0
-    if type == slicer.qMRMLScreenShotDialog.FullLayout:
-      # full layout
-      widget = lm.viewport()
-    elif type == slicer.qMRMLScreenShotDialog.ThreeD:
-      # just the 3D window
-      widget = lm.threeDWidget(0).threeDView()
-    elif type == slicer.qMRMLScreenShotDialog.Red:
-      # red slice window
-      widget = lm.sliceWidget("Red")
-    elif type == slicer.qMRMLScreenShotDialog.Yellow:
-      # yellow slice window
-      widget = lm.sliceWidget("Yellow")
-    elif type == slicer.qMRMLScreenShotDialog.Green:
-      # green slice window
-      widget = lm.sliceWidget("Green")
-    else:
-      # default to using the full window
-      widget = slicer.util.mainWindow()
-      # reset the type so that the node is set correctly
-      type = slicer.qMRMLScreenShotDialog.FullLayout
-
-    # grab and convert to vtk image data
-    qpixMap = qt.QPixmap().grabWidget(widget)
-    qimage = qpixMap.toImage()
-    imageData = vtk.vtkImageData()
-    slicer.qMRMLUtils().qImageToVtkImageData(qimage,imageData)
-
-    annotationLogic = slicer.modules.annotations.logic()
-    annotationLogic.CreateSnapShot(name, description, type, 1, imageData)
-
-  def run(self, inputVolume, outputVolume, imageThreshold, enableScreenshots=0):
+  def run(self, inputT2Volume, inputT2Segment, inputUSModel, outputT2Segment):
     """
     Run the actual algorithm
     """
 
-    if not self.isValidInputOutputData(inputVolume, outputVolume):
-      slicer.util.errorDisplay('Input volume is the same as output volume. Choose a different output volume.')
+    # Check that data is valid before proceeding
+    if not self.isValidInputData(inputT2Volume, inputT2Segment, inputUSModel):
+      slicer.util.errorDisplay('Check that inputs are correctly defined.')
+      return False
+
+    if not self.isValidInputOutputData(inputT2Volume, inputT2Segment, outputT2Segment):
+      slicer.util.errorDisplay('Check that Inputs and Outputs are defined correctly.')
       return False
 
     logging.info('Processing started')
 
-    # Compute the thresholded output volume using the Threshold Scalar Volume CLI module
-    cliParams = {'InputVolume': inputVolume.GetID(), 'OutputVolume': outputVolume.GetID(), 'ThresholdValue' : imageThreshold, 'ThresholdType' : 'Above'}
-    cliNode = slicer.cli.run(slicer.modules.thresholdscalarvolume, None, cliParams, wait_for_completion=True)
-
-    # Capture screenshot
-    if enableScreenshots:
-      self.takeScreenshot('T2ProcessTest-Start','MyScreenshot',-1)
+    #  a model of the T2 segmentation for smoothing
+    # create node in scene
+    slicer.modules.modelmaker.cliModuleLogic().CreateNodeInScene
+    cliParams = {'InputVolume': inputT2Segment.GetID(), 'ModelSceneFile': '/tmp/Slicer/BDGDE_AxHfCbIEBbHDfA.mrml#vtkMRMLModelHierarchyNode1', 'Name': 'MRModel', 'JointSmoothing': 'true', 'Smooth': 70, 'FilterType': 'Laplacian', 'Decimate': 0.1, "SplitNormals": 'false'}
+    print "here"
+    slicer.cli.run(slicer.modules.modelmaker, None, cliParams, wait_for_completion=True)
 
     logging.info('Processing completed')
 
