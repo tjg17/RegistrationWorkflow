@@ -100,7 +100,7 @@ class UltrasoundProcessWidget(ScriptedLoadableModuleWidget):
     self.outputSelector1.showChildNodeTypes = False
     self.outputSelector1.setMRMLScene( slicer.mrmlScene )
     self.outputSelector1.setToolTip( "Pick output segmentation volume." )
-    parametersFormLayout.addRow("Output Segmentation: ", self.outputSelector1)
+    parametersFormLayout.addRow("Output U/S Segmentation: ", self.outputSelector1)
 
     #
     # Apply Button
