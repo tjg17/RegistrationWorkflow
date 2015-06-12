@@ -16,7 +16,7 @@ class UltrasoundProcess(ScriptedLoadableModule):
   def __init__(self, parent):
     ScriptedLoadableModule.__init__(self, parent)
     self.parent.title = "UltrasoundProcess" # TODO make this more human readable by adding spaces
-    self.parent.categories = ["Registration"]
+    self.parent.categories = ["Custom"]
     self.parent.dependencies = []
     self.parent.contributors = ["Tyler Glass (Nightingale Lab)"] # replace with "Firstname Lastname (Organization)"
     self.parent.helpText = """

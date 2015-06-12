@@ -19,6 +19,8 @@ include(${Slicer_USE_FILE})
 #-----------------------------------------------------------------------------
 # Extension modules
 add_subdirectory(UltrasoundProcess)
+add_subdirectory(T2Process)
+add_subdirectory(ListModuleParams)
 ## NEXT_MODULE
 
 #-----------------------------------------------------------------------------
