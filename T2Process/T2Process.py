@@ -215,12 +215,50 @@ class T2ProcessLogic(ScriptedLoadableModuleLogic):
 
     logging.info('Processing started')
 
-    #  a model of the T2 segmentation for smoothing
-    # create node in scene
-    slicer.modules.modelmaker.cliModuleLogic().CreateNodeInScene
-    cliParams = {'InputVolume': inputT2Segment.GetID(), 'ModelSceneFile': '/tmp/Slicer/BDGDE_AxHfCbIEBbHDfA.mrml#vtkMRMLModelHierarchyNode1', 'Name': 'MRModel', 'JointSmoothing': 'true', 'Smooth': 70, 'FilterType': 'Laplacian', 'Decimate': 0.1, "SplitNormals": 'false'}
-    print "here"
-    slicer.cli.run(slicer.modules.modelmaker, None, cliParams, wait_for_completion=True)
+    #  make a model of the T2 segmentation for smoothing
+
+    parameters = {} # set parameters
+    parameters["InputVolume"] = inputT2Segment.GetID()
+    parameters['FilterType'] = "Laplacian"
+    parameters['GenerateAll'] = True
+    parameters["JointSmoothing"] = True
+    parameters["SplitNormals"] = False
+    parameters["PointNormals"] = False
+    parameters["SkipUnNamed"] = False
+    parameters["StartLabel"] = -1
+    parameters["EndLabel"] = -1
+    parameters["Decimate"] = 0.1
+    parameters["Smooth"] = 70
+
+    numNodes = slicer.mrmlScene.GetNumberOfNodesByClass( "vtkMRMLModelHierarchyNode" )
+    outHierarchy = None
+    
+    if numNodes > 0:
+      # user wants to delete any existing models, so take down hierarchy and
+      # delete the model nodes
+      rr = range(numNodes)
+      rr.reverse()
+      for n in rr:
+        node = slicer.mrmlScene.GetNthNodeByClass( n, "vtkMRMLModelHierarchyNode" )
+        slicer.mrmlScene.RemoveNode( node.GetModelNode() )
+        slicer.mrmlScene.RemoveNode( node )
+
+    if not outHierarchy:
+      outHierarchy = slicer.vtkMRMLModelHierarchyNode()
+      outHierarchy.SetScene( slicer.mrmlScene )
+      outHierarchy.SetName( "MRI Models" )
+      slicer.mrmlScene.AddNode( outHierarchy )
+
+    parameters["ModelSceneFile"] = outHierarchy
+
+    slicer.cli.run(slicer.modules.modelmaker, None, parameters, wait_for_completion=True)
+
+    slicer.cli(modelNode = getNode('Model_1_1'))
+
+    print modelNode
+
+
+    print outHierarchy
 
     logging.info('Processing completed')
 

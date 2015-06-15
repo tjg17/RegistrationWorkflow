@@ -26,6 +26,9 @@ add_subdirectory(DistanceMapBasedRegistration)
 add_subdirectory(Prostate Distance Map Registration)
 add_subdirectory(New Module)
 add_subdirectory(New Module)
+add_subdirectory(Distance Map Registration)
+add_subdirectory(DistanceMapRegister)
+add_subdirectory(PreProcess)
 ## NEXT_MODULE
 
 #-----------------------------------------------------------------------------

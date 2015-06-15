@@ -40,7 +40,7 @@ class ListModuleParamsWidget(ScriptedLoadableModuleWidget):
   def setup(self):
     ScriptedLoadableModuleWidget.setup(self)
 
-    cliModule = slicer.modules.modelmaker ### SELECT EXTENSION HERE!
+    cliModule = slicer.modules.resamplescalarvectordwivolume ### SELECT EXTENSION HERE!
     n=cliModule.cliModuleLogic().CreateNode()
     print '\n'
     print 'Parameter Set for {}:\n'.format(cliModule.name)
