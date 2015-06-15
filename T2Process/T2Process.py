@@ -205,13 +205,13 @@ class T2ProcessLogic(ScriptedLoadableModuleLogic):
     """
 
     # Check that data is valid before proceeding
-    if not self.isValidInputData(inputT2Volume, inputT2Segment, inputUSModel):
-      slicer.util.errorDisplay('Check that inputs are correctly defined.')
-      return False
+    #if not self.isValidInputData(inputT2Volume, inputT2Segment, inputUSModel):
+    #  slicer.util.errorDisplay('Check that inputs are correctly defined.')
+    #  return False
 
-    if not self.isValidInputOutputData(inputT2Volume, inputT2Segment, outputT2Segment):
-      slicer.util.errorDisplay('Check that Inputs and Outputs are defined correctly.')
-      return False
+    #if not self.isValidInputOutputData(inputT2Volume, inputT2Segment, outputT2Segment):
+    #  slicer.util.errorDisplay('Check that Inputs and Outputs are defined correctly.')
+    #  return False
 
     logging.info('Processing started')
 
@@ -253,12 +253,8 @@ class T2ProcessLogic(ScriptedLoadableModuleLogic):
 
     slicer.cli.run(slicer.modules.modelmaker, None, parameters, wait_for_completion=True)
 
-    slicer.cli(modelNode = getNode('Model_1_1'))
-
-    print modelNode
-
-
-    print outHierarchy
+    modelout = slicer.util.getNode('Model_1_1')
+    print modelout
 
     logging.info('Processing completed')
 
