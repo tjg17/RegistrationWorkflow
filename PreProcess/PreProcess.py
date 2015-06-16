@@ -66,7 +66,7 @@ class PreProcessWidget(ScriptedLoadableModuleWidget):
     self.USinputSelector1.showHidden = False
     self.USinputSelector1.showChildNodeTypes = False
     self.USinputSelector1.setMRMLScene( slicer.mrmlScene )
-    self.USinputSelector1.setToolTip( "Select ARFI volume." )
+    self.USinputSelector1.setToolTip( "Select ARFI_Norm_HistEq.nii.gz volume." )
     parametersFormLayout.addRow("Input ARFI Volume: ", self.USinputSelector1)
 
     #
@@ -82,7 +82,7 @@ class PreProcessWidget(ScriptedLoadableModuleWidget):
     self.USinputSelector2.showHidden = False
     self.USinputSelector2.showChildNodeTypes = False
     self.USinputSelector2.setMRMLScene( slicer.mrmlScene )
-    self.USinputSelector2.setToolTip( "Select Bmode volume." )
+    self.USinputSelector2.setToolTip( "Select Bmode.nii.gz volume." )
     parametersFormLayout.addRow("Input Bmode Volume: ", self.USinputSelector2)
 
     #
@@ -97,7 +97,7 @@ class PreProcessWidget(ScriptedLoadableModuleWidget):
     self.USinputSelector3.showHidden = False
     self.USinputSelector3.showChildNodeTypes = False
     self.USinputSelector3.setMRMLScene( slicer.mrmlScene )
-    self.USinputSelector3.setToolTip( "Select Ultrasound Capsule Model." )
+    self.USinputSelector3.setToolTip( "Select us_cap.vtk model." )
     parametersFormLayout.addRow("Input U/S Capsule Model: ", self.USinputSelector3)
 
     #
@@ -115,7 +115,7 @@ class PreProcessWidget(ScriptedLoadableModuleWidget):
     self.USoutputSelector1.showHidden = False
     self.USoutputSelector1.showChildNodeTypes = False
     self.USoutputSelector1.setMRMLScene( slicer.mrmlScene )
-    self.USoutputSelector1.setToolTip( "Select output capsule segmentation volume." )
+    self.USoutputSelector1.setToolTip( "Select ""Create new volume""." )
     parametersFormLayout.addRow("Output U/S Capsule Segmentation: ", self.USoutputSelector1)
 
     #
@@ -141,7 +141,7 @@ class PreProcessWidget(ScriptedLoadableModuleWidget):
     self.MRinputSelector1.showHidden = False
     self.MRinputSelector1.showChildNodeTypes = False
     self.MRinputSelector1.setMRMLScene( slicer.mrmlScene )
-    self.MRinputSelector1.setToolTip( "Select axial T2-MRI." )
+    self.MRinputSelector1.setToolTip( "Select PXX_no_PHI.nii.gz." )
     parametersFormLayout.addRow("Input T2-MRI Volume: ", self.MRinputSelector1)
 
     #
@@ -157,7 +157,7 @@ class PreProcessWidget(ScriptedLoadableModuleWidget):
     self.MRinputSelector2.showHidden = False
     self.MRinputSelector2.showChildNodeTypes = False
     self.MRinputSelector2.setMRMLScene( slicer.mrmlScene )
-    self.MRinputSelector2.setToolTip( "Select axial T2-MRI segmentation." )
+    self.MRinputSelector2.setToolTip( "Select PXX_caps_seg.nii.gz." )
     parametersFormLayout.addRow("Input T2-MRI Capsule Segmentation: ", self.MRinputSelector2)
 
 
@@ -176,7 +176,7 @@ class PreProcessWidget(ScriptedLoadableModuleWidget):
     self.MRoutputSelector1.showHidden = False
     self.MRoutputSelector1.showChildNodeTypes = False
     self.MRoutputSelector1.setMRMLScene( slicer.mrmlScene )
-    self.MRoutputSelector1.setToolTip( "Pick output segmentation volume." )
+    self.MRoutputSelector1.setToolTip( "Select ""Create new volume""." )
     parametersFormLayout.addRow("Output T2-MRI Capsule Segmentation: ", self.MRoutputSelector1)
 
     #
@@ -244,17 +244,40 @@ class PreProcessLogic(ScriptedLoadableModuleLogic):
       return False
     return True
 
-  def isValidInputOutputData(self, inputVolumeNode, outputVolumeNode):
+  def isValidUltrasoundData(self, inputVolumeNode1, inputVolumeNode2, inputModelNode, outputVolumeNode):
     """Validates if the output is not the same as input
     """
-    if not inputVolumeNode:
-      logging.debug('isValidInputOutputData failed: no input volume node defined')
+    if not inputVolumeNode1:
+      logging.debug('isValidInputOutputData failed: no input ARFI volume node defined')
+      return False
+    if not inputVolumeNode2:
+      logging.debug('isValidInputOutputData failed: no input Bmode volume node defined')
+      return False
+    if not inputModelNode:
+      logging.debug('isValidInputOutputData failed: no input capsule model node defined')
       return False
     if not outputVolumeNode:
-      logging.debug('isValidInputOutputData failed: no output volume node defined')
+      logging.debug('isValidInputOutputData failed: no output capsule labelmap node defined')
       return False
-    if inputVolumeNode.GetID()==outputVolumeNode.GetID():
-      logging.debug('isValidInputOutputData failed: input and output volume is the same. Create a new volume for output to avoid this error.')
+    if inputVolumeNode1.GetID()==inputVolumeNode2.GetID():
+      logging.debug('isValidInputOutputData failed: ARFI and Bmode inputs are the same node.')
+      return False
+    return True
+
+  def isValidMRIData(self, inputVolumeNode1, inputVolumeNode2, outputVolumeNode):
+    """Validates if the output is not the same as input
+    """
+    if not inputVolumeNode1:
+      logging.debug('isValidInputOutputData failed: no input T2-MRI volume node defined')
+      return False
+    if not inputVolumeNode2:
+      logging.debug('isValidInputOutputData failed: no input T2 capsule segmentation volume node defined')
+      return False
+    if not outputVolumeNode:
+      logging.debug('isValidInputOutputData failed: no output capsule labelmap node defined')
+      return False
+    if inputVolumeNode1.GetID()==outputVolumeNode.GetID():
+      logging.debug('isValidInputOutputData failed: Input and output segmentation are the same node. Create a new output volume to avoid this error.')
       return False
     return True
 
@@ -381,11 +404,11 @@ class PreProcessLogic(ScriptedLoadableModuleLogic):
     
     # Define transform matrix
     translate_transform = vtk.vtkMatrix4x4()
-    translate_transform.SetElement(2,3,fixed_bounds[5] - moving_bounds[5]) # lines up base of prostate at same value
-    translate_transform.SetElement(1,3,fixed_bounds[2] - moving_bounds[2]) # lines up posterior of prostate at same value
-    translate_transform.SetElement(0,3,fixed_bounds[0] - moving_bounds[0]) # lines up right side of prostate at same value
+    translate_transform.SetElement(2,3,fixed_bounds[5] - moving_bounds[5]) # lines up base of prostate 
+    translate_transform.SetElement(1,3,fixed_bounds[2] - moving_bounds[2]) # lines up posterior of prostate 
+    translate_transform.SetElement(0,3,fixed_bounds[0] - moving_bounds[0]) # lines up right side of prostate 
     
-    # OPTIONAL: print transform to Python
+    # OPTIONAL: print transform to Python CLI
     # print translate_transform 
 
     # Apply transform to MRI-T2 volume and model
@@ -416,10 +439,17 @@ class PreProcessLogic(ScriptedLoadableModuleLogic):
     """
     Run the actual algorithm
     """
+    # Check user-defined inputs and outputs
+    if not self.isValidUltrasoundData(inputARFI, inputBmode, inputUSCaps_Model, outputUSCaps_Seg):
+      slicer.util.errorDisplay('Check that Ultrasound Inputs/Outputs are correctly defined.')
+      return False
+    if not self.isValidMRIData(inputT2, inputMRCaps_Seg, outputMRCaps_Seg):
+      slicer.util.errorDisplay('Check that MRI Inputs/Outputs are correctly defined.')
+      return False
 
     # Print to Slicer CLI
     logging.info('\n\nProcessing started')
-    print('Expected Run Time: 90 seconds') # based on previous trials of the algorithm
+    print('Expected Run Time: 85 seconds') # based on previous trials of the algorithm
     start_time_overall = time.time() # start timer
 
     # Center the Ultrasound inputs (ultrasound capsule was segmented and modeled on centered volume)
