@@ -213,7 +213,7 @@ class PreProcessWidget(ScriptedLoadableModuleWidget):
     # Parameters Area
     #
     parametersCollapsibleButton = ctk.ctkCollapsibleButton()
-    parametersCollapsibleButton.text = "MRI Input Data"
+    parametersCollapsibleButton.text = "MRI Data"
     self.layout.addWidget(parametersCollapsibleButton)
 
     # Layout within the dummy collapsible button
@@ -463,7 +463,7 @@ class PreProcessLogic(ScriptedLoadableModuleLogic):
     end_time = time.time()
     print('done (%0.2f s)') % float(end_time-start_time)
 
-  def US_transform(self, inputUS_node):
+  def US_transform(self, inputARFI,   inputBmode,  inputCC,  inputUSCaps_Model, inputUSCG_Model):
     """ Performs inversion transform with [1 1 -1 1] diagonal entries on Ultrasound inputs
     """
     # Print to Slicer CLI
@@ -474,14 +474,16 @@ class PreProcessLogic(ScriptedLoadableModuleLogic):
     invert_transform = vtk.vtkMatrix4x4()
     invert_transform.SetElement(2,2,-1) # put a -1 in 3rd entry of diagonal of matrix
 
-    # Apply transform to input node
-    inputUS_node.ApplyTransformMatrix(invert_transform)
+    # Apply transform to all input nodes
+    inputARFI.ApplyTransformMatrix(invert_transform)
+    inputBmode.ApplyTransformMatrix(invert_transform)
+    inputCC.ApplyTransformMatrix(invert_transform)
+    inputUSCaps_Model.ApplyTransformMatrix(invert_transform)
+    inputUSCG_Model.ApplyTransformMatrix(invert_transform)
 
     # print to Slicer CLI
     end_time = time.time()
     print('done (%0.2f s)') % float(end_time-start_time)
-
-    return inputUS_node
 
   def ModelToLabelMap(self, inputVolume, inputModel, outputVolume):
     """ Converts model into a labelmap on the input volume using 0.1 sample distance so that smaller than Ultrasound voxel size
@@ -597,7 +599,7 @@ class PreProcessLogic(ScriptedLoadableModuleLogic):
     end_time = time.time()
     print('done (%0.2f s)') % float(end_time-start_time)
 
-  def run(self, PatientNumber, SaveUSData, SaveMRData,
+  def run(self, PatientNumber, SaveUSDataBool, SaveMRDataBool,
         inputARFI,   inputBmode,  inputCC,  inputUSCaps_Model, inputUSCG_Model, 
                                             outputUSCaps_Seg,  outputUSCG_Seg, 
         inputT2,  inputMRCaps_Seg,  inputMRZones_Seg,  inputMRFinal_Seg, 
@@ -615,32 +617,24 @@ class PreProcessLogic(ScriptedLoadableModuleLogic):
 
     # Print to Slicer CLI
     logging.info('\n\nProcessing started')
-    print('Expected Run Time: 85 seconds') # based on previous trials of the algorithm
+    print('Expected Run Time: 200 seconds') # based on previous trials of the algorithm
     start_time_overall = time.time() # start timer
 
     # Center the Ultrasound volume inputs
-    #self.CenterVolume(inputARFI)
-    #self.CenterVolume(inputBmode)
-    #self.CenterVolume(inputCC)
+    self.CenterVolume(inputARFI)
+    self.CenterVolume(inputBmode)
+    self.CenterVolume(inputCC)
 
     # # Transform US inputs using inversion transform
-    #self.US_transform(inputUSCaps_Model)
-
-    # Save US inputs to file
-    if SaveUSData:
-        # code to save US data
-        print "Saving US data"
-    if SaveMRData: 
-        print "Saving MRI data"
-    # slicer.util.saveNode(inputARFI,'/luscinia/ProstateStudy/invivo/Patient86/Registration/RegistrationInputs/us_ARFI.nii.gz')
-
+    self.US_transform(inputARFI,   inputBmode,  inputCC,  inputUSCaps_Model, inputUSCG_Model)    
     
-    
-    # # Convert US Capsule model to labelmap
-    # print('Ultrasound: '), 
+    # # Convert US Capsule and CG models to labelmap
+    # print('Ultrasound Capsule: '), 
     # self.ModelToLabelMap(inputARFI, inputUSCaps_Model, outputUSCaps_Seg)
+    # print('Ultrasound Central Gland: '), 
+    # self.ModelToLabelMap(inputARFI, inputUSCG_Model, outputUSCG_Seg)
 
-    # # Make Model of MRI input capsule segmentation using Model Maker Module and define to variable
+    # # Make Model of MRI input capsule segmentation using Model Maker Module and define new variable
     # intermediateMRCaps_Model = self.MRModelMaker(inputMRCaps_Seg)
 
     # # Transform MRI model and T2 volume to match Ultrasound
@@ -652,6 +646,10 @@ class PreProcessLogic(ScriptedLoadableModuleLogic):
     # # Convert MR Capsule model to labelmap with same parameters as resampled T2
     # print('MRI: '),
     # self.ModelToLabelMap(inputT2, intermediateMRCaps_Model, outputMRCaps_Seg)
+
+    #if SaveUSDataBool:
+        # code to save the data
+
 
     # # Print Completion Status to Slicer CLI
     # end_time_overall = time.time()
