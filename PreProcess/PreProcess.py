@@ -550,7 +550,7 @@ class PreProcessLogic(ScriptedLoadableModuleLogic):
     slicer.cli.run(slicer.modules.modelmaker, None, parameters, wait_for_completion=True)
 
     # Define the output model as the created model in the scene
-    outputMRModel = slicer.util.getNode('Model_1_1')
+    outputMRModel = slicer.util.getNode('Model_1_1') # cap label has label value of 1 so model created is Model_1_1
 
     # print to Slicer CLI
     end_time = time.time()
@@ -563,7 +563,7 @@ class PreProcessLogic(ScriptedLoadableModuleLogic):
     """ Translates MRI capsule and T2 imaging volume to roughly align with US capsule model so T2 prostate is within ARFI image
     """
     # Print to Slicer CLI
-    print('Translating T2 volume and MRI model...'),
+    print('Translating MRI inputs to U/S capsule...'),
     start_time = time.time()
 
     # Find out coordinates of models to be used for translation matrix
@@ -609,7 +609,7 @@ class PreProcessLogic(ScriptedLoadableModuleLogic):
     end_time = time.time()
     print('done (%0.2f s)') % float(end_time-start_time)
 
-  def ResampleVolumefromReference(self, referenceVolume, inputVolumes):
+  def ResampleVolumefromReference(self, referenceVolume, *inputVolumes):
     """ Resamples an input volume to match ARFI reference volume spacing, size, orientation, and origin
     """
     # Print to Slicer CLI
@@ -644,7 +644,7 @@ class PreProcessLogic(ScriptedLoadableModuleLogic):
     # Print to Slicer CLI
     logging.info('\n\nProcessing started')
     start_time_overall = time.time() # start timer
-    print('Expected Run Time: 100 seconds') # based on previous trials of the algorithm
+    print('Expected Run Time: 35 seconds') # based on previous trials of the algorithm
     
     # Center the Ultrasound volume inputs
     self.CenterVolume(inputARFI, inputBmode, inputCC)
@@ -659,9 +659,7 @@ class PreProcessLogic(ScriptedLoadableModuleLogic):
     self.MR_translate(intermediateMRCaps_Model, inputUSCaps_Model, inputT2,  inputMRCaps_Seg,  inputMRZones_Seg,  inputMRFinal_Seg) # add more MRI inputs to the function
 
     # Convert US Capsule and CG models to labelmap on T2 volume (use T2 for faster conversion)
-    print('Ultrasound Capsule: '), 
     self.ModelToLabelMap(inputT2, inputUSCaps_Model, outputUSCaps_Seg)
-    print('Ultrasound Central Gland: '), 
     self.ModelToLabelMap(inputT2, inputUSCG_Model, outputUSCG_Seg)
 
     # Use Segmentation Smoothing Module on Ultrasound Capsule and CG labels
