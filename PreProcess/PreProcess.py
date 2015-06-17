@@ -5,6 +5,22 @@ from slicer.ScriptedLoadableModule import *
 import logging
 import time # for measuring time of processing steps
 
+
+def numericInputFrame(parent, label, tooltip, minimum, maximum, step, decimals):
+    inputFrame = qt.QFrame(parent)
+    inputFrame.setLayout(qt.QHBoxLayout())
+    inputLabel = qt.QLabel(label, inputFrame)
+    inputLabel.setToolTip(tooltip)
+    inputFrame.layout().addWidget(inputLabel)
+    inputSpinBox = qt.QDoubleSpinBox(inputFrame)
+    inputSpinBox.setToolTip(tooltip)
+    inputSpinBox.minimum = minimum
+    inputSpinBox.maximum = maximum
+    inputSpinBox.singleStep = step
+    inputSpinBox.decimals = decimals
+    inputFrame.layout().addWidget(inputSpinBox)
+    return inputFrame, inputSpinBox
+
 #
 # PreProcess
 #
@@ -42,6 +58,32 @@ class PreProcessWidget(ScriptedLoadableModuleWidget):
     ScriptedLoadableModuleWidget.setup(self)
 
     # Instantiate and connect widgets ...
+
+
+    #
+    # Parameters Area
+    #
+    parametersCollapsibleButton = ctk.ctkCollapsibleButton()
+    parametersCollapsibleButton.text = "Patient Information"
+    self.layout.addWidget(parametersCollapsibleButton)
+
+    # Layout within the dummy collapsible button
+    parametersFormLayout = qt.QFormLayout(parametersCollapsibleButton)
+
+    PatientNumberMethodFrame = qt.QFrame(self.parent)
+    parametersFormLayout.addWidget(PatientNumberMethodFrame)
+    PatientNumberMethodFormLayout = qt.QFormLayout(PatientNumberMethodFrame)
+    PatientNumberIterationsFrame, self.PatientNumberIterationsSpinBox = numericInputFrame(self.parent,"Patient Number:","Tooltip",56,110,1,0)
+    PatientNumberMethodFormLayout.addWidget(PatientNumberIterationsFrame)
+
+    self.SaveUSDataCheckBox = qt.QCheckBox("Save Ultrasound Outputs")
+    self.SaveUSDataCheckBox.checked = False
+    parametersFormLayout.addWidget(self.SaveUSDataCheckBox)
+
+    self.SaveMRIDataCheckBox = qt.QCheckBox("Save MRI Outputs")
+    self.SaveMRIDataCheckBox.checked = False
+    parametersFormLayout.addWidget(self.SaveMRIDataCheckBox)
+
 
     #
     # Parameters Area
@@ -86,10 +128,11 @@ class PreProcessWidget(ScriptedLoadableModuleWidget):
     parametersFormLayout.addRow("Input Bmode Volume: ", self.USinputSelector2)
 
     #
-    # input ultrasound capsule VTK model
+    # input CC Mask label volume selector
     #
     self.USinputSelector3 = slicer.qMRMLNodeComboBox()
-    self.USinputSelector3.nodeTypes = ( ("vtkMRMLModelNode"), "" )
+    self.USinputSelector3.nodeTypes = ( ("vtkMRMLScalarVolumeNode"), "" )
+    self.USinputSelector3.addAttribute( "vtkMRMLScalarVolumeNode", "LabelMap", 1 )
     self.USinputSelector3.selectNodeUponCreation = True
     self.USinputSelector3.addEnabled = False
     self.USinputSelector3.removeEnabled = False
@@ -97,11 +140,41 @@ class PreProcessWidget(ScriptedLoadableModuleWidget):
     self.USinputSelector3.showHidden = False
     self.USinputSelector3.showChildNodeTypes = False
     self.USinputSelector3.setMRMLScene( slicer.mrmlScene )
-    self.USinputSelector3.setToolTip( "Select us_cap.vtk model." )
-    parametersFormLayout.addRow("Input U/S Capsule Model: ", self.USinputSelector3)
+    self.USinputSelector3.setToolTip( "Select ARFI_CC_Mask.nii.gz volume." )
+    parametersFormLayout.addRow("Input ARFI CC Mask: ", self.USinputSelector3)
 
     #
-    # output segmentation selector
+    # input ultrasound capsule VTK model
+    #
+    self.USinputSelector4 = slicer.qMRMLNodeComboBox()
+    self.USinputSelector4.nodeTypes = ( ("vtkMRMLModelNode"), "" )
+    self.USinputSelector4.selectNodeUponCreation = True
+    self.USinputSelector4.addEnabled = False
+    self.USinputSelector4.removeEnabled = False
+    self.USinputSelector4.noneEnabled = False
+    self.USinputSelector4.showHidden = False
+    self.USinputSelector4.showChildNodeTypes = False
+    self.USinputSelector4.setMRMLScene( slicer.mrmlScene )
+    self.USinputSelector4.setToolTip( "Select us_cap.vtk model." )
+    parametersFormLayout.addRow("Input U/S Capsule Model: ", self.USinputSelector4)
+
+    #
+    # input ultrasound central gland VTK model
+    #
+    self.USinputSelector5 = slicer.qMRMLNodeComboBox()
+    self.USinputSelector5.nodeTypes = ( ("vtkMRMLModelNode"), "" )
+    self.USinputSelector5.selectNodeUponCreation = True
+    self.USinputSelector5.addEnabled = False
+    self.USinputSelector5.removeEnabled = False
+    self.USinputSelector5.noneEnabled = False
+    self.USinputSelector5.showHidden = False
+    self.USinputSelector5.showChildNodeTypes = False
+    self.USinputSelector5.setMRMLScene( slicer.mrmlScene )
+    self.USinputSelector5.setToolTip( "Select us_cg.vtk model." )
+    parametersFormLayout.addRow("Input U/S Central Gland Model: ", self.USinputSelector5)
+
+    #
+    # output capsule segmentation selector
     #
     self.USoutputSelector1 = slicer.qMRMLNodeComboBox()
     self.USoutputSelector1.nodeTypes = ( ("vtkMRMLScalarVolumeNode"), "" )
@@ -117,6 +190,24 @@ class PreProcessWidget(ScriptedLoadableModuleWidget):
     self.USoutputSelector1.setMRMLScene( slicer.mrmlScene )
     self.USoutputSelector1.setToolTip( "Select ""Create new volume""." )
     parametersFormLayout.addRow("Output U/S Capsule Segmentation: ", self.USoutputSelector1)
+
+    #
+    # output central gland segmentation selector
+    #
+    self.USoutputSelector2 = slicer.qMRMLNodeComboBox()
+    self.USoutputSelector2.nodeTypes = ( ("vtkMRMLScalarVolumeNode"), "" )
+    self.USoutputSelector2.addAttribute( "vtkMRMLScalarVolumeNode", "LabelMap", 1 ) # this one is a labelmap
+    self.USoutputSelector2.selectNodeUponCreation = True
+    self.USoutputSelector2.addEnabled = True
+    self.USoutputSelector2.removeEnabled = True
+    self.USoutputSelector2.renameEnabled = False
+    self.USoutputSelector2.baseName = "us_cg-label"
+    self.USoutputSelector2.noneEnabled = False
+    self.USoutputSelector2.showHidden = False
+    self.USoutputSelector2.showChildNodeTypes = False
+    self.USoutputSelector2.setMRMLScene( slicer.mrmlScene )
+    self.USoutputSelector2.setToolTip( "Select ""Create new volume""." )
+    parametersFormLayout.addRow("Output U/S Central Gland Segment: ", self.USoutputSelector2)
 
     #
     # Parameters Area
@@ -145,7 +236,7 @@ class PreProcessWidget(ScriptedLoadableModuleWidget):
     parametersFormLayout.addRow("Input T2-MRI Volume: ", self.MRinputSelector1)
 
     #
-    # input T2-MRI segmentation
+    # input T2-MRI capsule dsegmentation
     #
     self.MRinputSelector2 = slicer.qMRMLNodeComboBox()
     self.MRinputSelector2.nodeTypes = ( ("vtkMRMLScalarVolumeNode"), "" )
@@ -160,24 +251,92 @@ class PreProcessWidget(ScriptedLoadableModuleWidget):
     self.MRinputSelector2.setToolTip( "Select PXX_caps_seg.nii.gz." )
     parametersFormLayout.addRow("Input T2-MRI Capsule Segmentation: ", self.MRinputSelector2)
 
+    #
+    # input T2-MRI zones segmentation
+    #
+    self.MRinputSelector3 = slicer.qMRMLNodeComboBox()
+    self.MRinputSelector3.nodeTypes = ( ("vtkMRMLScalarVolumeNode"), "" )
+    self.MRinputSelector3.addAttribute( "vtkMRMLScalarVolumeNode", "LabelMap", 1 )
+    self.MRinputSelector3.selectNodeUponCreation = True
+    self.MRinputSelector3.addEnabled = False
+    self.MRinputSelector3.removeEnabled = False
+    self.MRinputSelector3.noneEnabled = False
+    self.MRinputSelector3.showHidden = False
+    self.MRinputSelector3.showChildNodeTypes = False
+    self.MRinputSelector3.setMRMLScene( slicer.mrmlScene )
+    self.MRinputSelector3.setToolTip( "Select PXX_zones_seg.nii.gz." )
+    parametersFormLayout.addRow("Input T2-MRI Zones Segmentation: ", self.MRinputSelector3)
 
     #
-    # output segmentation selector
+    # input T2-MRI cancer/BPH/overall segmentation
     #
-    self.MRoutputSelector1 = slicer.qMRMLNodeComboBox()
-    self.MRoutputSelector1.nodeTypes = ( ("vtkMRMLScalarVolumeNode"), "" )
-    self.MRoutputSelector1.addAttribute( "vtkMRMLScalarVolumeNode", "LabelMap", 1 ) # this one is a labelmap
-    self.MRoutputSelector1.selectNodeUponCreation = True
-    self.MRoutputSelector1.addEnabled = True
-    self.MRoutputSelector1.removeEnabled = True
-    self.MRoutputSelector1.renameEnabled = False
-    self.MRoutputSelector1.baseName = "mr_cap-label"
-    self.MRoutputSelector1.noneEnabled = False
-    self.MRoutputSelector1.showHidden = False
-    self.MRoutputSelector1.showChildNodeTypes = False
-    self.MRoutputSelector1.setMRMLScene( slicer.mrmlScene )
-    self.MRoutputSelector1.setToolTip( "Select ""Create new volume""." )
-    parametersFormLayout.addRow("Output T2-MRI Capsule Segmentation: ", self.MRoutputSelector1)
+    self.MRinputSelector4 = slicer.qMRMLNodeComboBox()
+    self.MRinputSelector4.nodeTypes = ( ("vtkMRMLScalarVolumeNode"), "" )
+    self.MRinputSelector4.addAttribute( "vtkMRMLScalarVolumeNode", "LabelMap", 1 )
+    self.MRinputSelector4.selectNodeUponCreation = True
+    self.MRinputSelector4.addEnabled = False
+    self.MRinputSelector4.removeEnabled = False
+    self.MRinputSelector4.noneEnabled = False
+    self.MRinputSelector4.showHidden = False
+    self.MRinputSelector4.showChildNodeTypes = False
+    self.MRinputSelector4.setMRMLScene( slicer.mrmlScene )
+    self.MRinputSelector4.setToolTip( "Select PXX_segmentation_final.nrrd." )
+    parametersFormLayout.addRow("Input T2-MRI Final Segmentation: ", self.MRinputSelector4)
+
+    #
+    # output capsule segmentation selector
+    #
+    self.MRoutputSelector2 = slicer.qMRMLNodeComboBox()
+    self.MRoutputSelector2.nodeTypes = ( ("vtkMRMLScalarVolumeNode"), "" )
+    self.MRoutputSelector2.addAttribute( "vtkMRMLScalarVolumeNode", "LabelMap", 1 ) # this one is a labelmap
+    self.MRoutputSelector2.selectNodeUponCreation = True
+    self.MRoutputSelector2.addEnabled = True
+    self.MRoutputSelector2.removeEnabled = True
+    self.MRoutputSelector2.renameEnabled = False
+    self.MRoutputSelector2.baseName = "mr_cap-label"
+    self.MRoutputSelector2.noneEnabled = False
+    self.MRoutputSelector2.showHidden = False
+    self.MRoutputSelector2.showChildNodeTypes = False
+    self.MRoutputSelector2.setMRMLScene( slicer.mrmlScene )
+    self.MRoutputSelector2.setToolTip( "Select ""Create new volume""." )
+    parametersFormLayout.addRow("Output T2-MRI Capsule Segmentation: ", self.MRoutputSelector2)
+
+    #
+    # output central gland segmentation selector
+    #
+    self.MRoutputSelector3 = slicer.qMRMLNodeComboBox()
+    self.MRoutputSelector3.nodeTypes = ( ("vtkMRMLScalarVolumeNode"), "" )
+    self.MRoutputSelector3.addAttribute( "vtkMRMLScalarVolumeNode", "LabelMap", 1 ) # this one is a labelmap
+    self.MRoutputSelector3.selectNodeUponCreation = True
+    self.MRoutputSelector3.addEnabled = True
+    self.MRoutputSelector3.removeEnabled = True
+    self.MRoutputSelector3.renameEnabled = False
+    self.MRoutputSelector3.baseName = "mr_cg-label"
+    self.MRoutputSelector3.noneEnabled = False
+    self.MRoutputSelector3.showHidden = False
+    self.MRoutputSelector3.showChildNodeTypes = False
+    self.MRoutputSelector3.setMRMLScene( slicer.mrmlScene )
+    self.MRoutputSelector3.setToolTip( "Select ""Create new volume""." )
+    parametersFormLayout.addRow("Output T2-MRI Central Gland Segment: ", self.MRoutputSelector3)
+
+    #
+    # output final segmentation (tumors/BPH/etc) selector
+    #
+    self.MRoutputSelector4 = slicer.qMRMLNodeComboBox()
+    self.MRoutputSelector4.nodeTypes = ( ("vtkMRMLScalarVolumeNode"), "" )
+    self.MRoutputSelector4.addAttribute( "vtkMRMLScalarVolumeNode", "LabelMap", 1 ) # this one is a labelmap
+    self.MRoutputSelector4.selectNodeUponCreation = True
+    self.MRoutputSelector4.addEnabled = True
+    self.MRoutputSelector4.removeEnabled = True
+    self.MRoutputSelector4.renameEnabled = False
+    self.MRoutputSelector4.baseName = "mr_final-label"
+    self.MRoutputSelector4.noneEnabled = False
+    self.MRoutputSelector4.showHidden = False
+    self.MRoutputSelector4.showChildNodeTypes = False
+    self.MRoutputSelector4.setMRMLScene( slicer.mrmlScene )
+    self.MRoutputSelector4.setToolTip( "Select ""Create new volume""." )
+    parametersFormLayout.addRow("Output T2-MRI Final Segmentation: ", self.MRoutputSelector4)
+
 
     #
     # Output Segmentation Params Parameters Area
@@ -214,8 +373,11 @@ class PreProcessWidget(ScriptedLoadableModuleWidget):
 
   def onApplyButton(self):
     logic = PreProcessLogic()
-    logic.run(self.USinputSelector1.currentNode(), self.USinputSelector2.currentNode(), self.USinputSelector3.currentNode(), self.USoutputSelector1.currentNode(), 
-              self.MRinputSelector1.currentNode(), self.MRinputSelector2.currentNode(), self.MRoutputSelector1.currentNode())
+    logic.run(str(int(self.PatientNumberIterationsSpinBox.value)), self.SaveUSDataCheckBox.checked, self.SaveMRIDataCheckBox.checked,
+              self.USinputSelector1.currentNode(),  self.USinputSelector2.currentNode(),  self.USinputSelector3.currentNode(),  self.USinputSelector4.currentNode(),  self.USinputSelector5.currentNode(),
+              self.USoutputSelector1.currentNode(), self.USoutputSelector2.currentNode(), 
+              self.MRinputSelector1.currentNode(),  self.MRinputSelector2.currentNode(),  self.MRinputSelector3.currentNode(),  self.MRinputSelector4.currentNode(), 
+                                                    self.MRoutputSelector2.currentNode(), self.MRoutputSelector3.currentNode(), self.MRoutputSelector4.currentNode())
 
 #
 # PreProcessLogic
@@ -244,8 +406,8 @@ class PreProcessLogic(ScriptedLoadableModuleLogic):
       return False
     return True
 
-  def isValidUltrasoundData(self, inputVolumeNode1, inputVolumeNode2, inputModelNode, outputVolumeNode):
-    """Validates if the output is not the same as input
+  def isValidUltrasoundData(self, VolumeNode1, VolumeNode2, VolumeNode3, ModelNode1, ModelNode2):
+    """Validates if ultrasound data is defined
     """
     if not inputVolumeNode1:
       logging.debug('isValidInputOutputData failed: no input ARFI volume node defined')
@@ -281,62 +443,68 @@ class PreProcessLogic(ScriptedLoadableModuleLogic):
       return False
     return True
 
-  def CenterVolume(self, inputVolume):
+  def CenterVolume(self, *inputVolumes):
     """ Centers an inputted volume using the image spacing, size, and origin of the volume
     """
     # Print to Slicer CLI
     print('Centering volume...'),
     start_time = time.time()
 
-    # Use image size and spacing to find origin coordinates
-    extent = [x-1 for x in inputVolume.GetImageData().GetDimensions()] # subtract 1 from dimensions to get extent
-    spacing = [x for x in inputVolume.GetSpacing()]
-    new_origin = [a*b/2 for a,b in zip(extent,spacing)]
-    new_origin[2] = -new_origin[2] # need to make this value negative to center the volume
+    for inputVolume in inputVolumes: # cycle through all input volumes
 
-    # Set input volume origin to the new origin
-    inputVolume.SetOrigin(new_origin)
+        # Use image size and spacing to find origin coordinates
+        extent = [x-1 for x in inputVolume.GetImageData().GetDimensions()] # subtract 1 from dimensions to get extent
+        spacing = [x for x in inputVolume.GetSpacing()]
+        new_origin = [a*b/2 for a,b in zip(extent,spacing)]
+        new_origin[2] = -new_origin[2] # need to make this value negative to center the volume
+
+        # Set input volume origin to the new origin
+        inputVolume.SetOrigin(new_origin)
 
     # print to Slicer CLI
     end_time = time.time()
     print('done (%0.2f s)') % float(end_time-start_time)
 
-  def US_transform(self, inputARFI_node, inputBmode_node, inputUSModel_node):
+  def US_transform(self, *ARFIinputs):
     """ Performs inversion transform with [1 1 -1 1] diagonal entries on Ultrasound inputs
     """
     # Print to Slicer CLI
-    print('Transforming Ultrasound inputs...'),
+    print('Transforming Ultrasound input...'),
     start_time = time.time()
 
     # Create inverting transform matrix
     invert_transform = vtk.vtkMatrix4x4()
     invert_transform.SetElement(2,2,-1) # put a -1 in 3rd entry of diagonal of matrix
 
-    # Apply transform to input nodes
-    inputARFI_node.ApplyTransformMatrix(invert_transform)
-    inputBmode_node.ApplyTransformMatrix(invert_transform)
-    inputUSModel_node.ApplyTransformMatrix(invert_transform)
+    # Apply transform to all input nodes
+    for ARFIinput in ARFIinputs:
+        ARFIinput.ApplyTransformMatrix(invert_transform)
+    # inputARFI.ApplyTransformMatrix(invert_transform)
+    # inputBmode.ApplyTransformMatrix(invert_transform)
+    # inputCC.ApplyTransformMatrix(invert_transform)
+    # inputUSCaps_Model.ApplyTransformMatrix(invert_transform)
+    # inputUSCG_Model.ApplyTransformMatrix(invert_transform)
 
     # print to Slicer CLI
     end_time = time.time()
     print('done (%0.2f s)') % float(end_time-start_time)
 
   def ModelToLabelMap(self, inputVolume, inputModel, outputVolume):
-    """ Converts model into a labelmap on the input volume using 0.1 sample distance so that smaller than Ultrasound voxel size
+    """ Converts models into a labelmap on the input T2-MRI volume using 0.25 sample distance to be smaller than MRI smallest pixel width
     """
     # Print to Slicer CLI
     print('Converting Model to Label Map...'),
     start_time = time.time()
 
     # Run the slicer module in CLI
-    cliParams = {'InputVolume': inputVolume.GetID(), 'surface': inputModel.GetID(), 'OutputVolume': outputVolume.GetID(), 'sampleDistance': 0.1, 'labelValue': 10}
+    cliParams = {'InputVolume': inputVolume.GetID(), 'surface': inputModel.GetID(), 'OutputVolume': outputVolume.GetID(), 'sampleDistance': 0.25, 'labelValue': 10}
     cliNode = slicer.cli.run(slicer.modules.modeltolabelmap, None, cliParams, wait_for_completion=True)
     
     # print to Slicer CLI
     end_time = time.time()
     print('done (%0.2f s)') % float(end_time-start_time)
 
-  def MRModelMaker(self, inputMRlabel):
+  def MRCapModelMaker(self, inputMRlabel):
     """ Converts MRI labelmap segemntation into slicer VTK model node
     """
     # Print to Slicer CLI
@@ -382,7 +550,7 @@ class PreProcessLogic(ScriptedLoadableModuleLogic):
     slicer.cli.run(slicer.modules.modelmaker, None, parameters, wait_for_completion=True)
 
     # Define the output model as the created model in the scene
-    outputMRModel = slicer.util.getNode('Model_1_1')
+    outputMRModel = slicer.util.getNode('Model_1_1') # cap label has label value of 1 so model created is Model_1_1
 
     # print to Slicer CLI
     end_time = time.time()
@@ -390,16 +558,17 @@ class PreProcessLogic(ScriptedLoadableModuleLogic):
 
     return outputMRModel    
 
-  def MR_translate(self, movingVolume, movingModel, movingLabel, fixedModel):
+
+  def MR_translate(self, movingMRIModel, fixedUSModel, *MRIinputs): 
     """ Translates MRI capsule and T2 imaging volume to roughly align with US capsule model so T2 prostate is within ARFI image
     """
     # Print to Slicer CLI
-    print('Translating T2 volume and MRI model...'),
+    print('Translating MRI inputs to U/S capsule...'),
     start_time = time.time()
 
     # Find out coordinates of models to be used for translation matrix
-    moving_bounds = movingModel.GetPolyData().GetBounds()
-    fixed_bounds  =  fixedModel.GetPolyData().GetBounds()
+    moving_bounds = movingMRIModel.GetPolyData().GetBounds()
+    fixed_bounds  =   fixedUSModel.GetPolyData().GetBounds()
 
     
     # Define transform matrix
@@ -411,70 +580,106 @@ class PreProcessLogic(ScriptedLoadableModuleLogic):
     # OPTIONAL: print transform to Python CLI
     # print translate_transform 
 
-    # Apply transform to MRI-T2 volume and model
-    movingVolume.ApplyTransformMatrix(translate_transform)
-    movingModel.ApplyTransformMatrix(translate_transform)
-    movingLabel.ApplyTransformMatrix(translate_transform)
+    # Apply transform to all MRI inputs
+    for MRIinput in MRIinputs:
+        MRIinput.ApplyTransformMatrix(translate_transform)
 
     # print to Slicer CLI
     end_time = time.time()
     print('done (%0.2f s)') % float(end_time-start_time)
-
-  def ResampleVolume(self, inputVolume, referenceVolume):
-    """ Resamples and input volume to match reference volume spacing, size, orientation, and origin
+  
+  def SegmentationSmoothing(self, inputVolume, outputsmoothedVolume, *labelNumber):
+    """ Smooths an input volume into an outputVolume using the Segmentation Smoothing Module from SlicerProstate module
     """
     # Print to Slicer CLI
-    print('Resampling T2 volume to match ARFI...'),
+    print('Smoothing label volume...'),
     start_time = time.time()
 
-    # Run Resample ScalarVectorDWIVolume Module from CLI
-    cliParams = {'inputVolume': inputVolume.GetID(), 'outputVolume': inputVolume.GetID(), 'referenceVolume': referenceVolume.GetID()}
-    cliNode = slicer.cli.run(slicer.modules.resamplescalarvectordwivolume, None, cliParams, wait_for_completion=True)
+    # Define parameters for smoothing
+    parameters = {}
+    parameters["inputImageName"]= inputVolume.GetID()
+    parameters["outputImageName"]= outputsmoothedVolume.GetID()
+    if labelNumber:
+        parameters['labelNumber'] = int(labelNumber[0]) # have to grab first value of tuple for optional argument
+
+    # Rn the smoothing segmentation module from CLI
+    cliNode = slicer.cli.run(slicer.modules.segmentationsmoothing, None, parameters, wait_for_completion = True)
 
     # print to Slicer CLI
     end_time = time.time()
     print('done (%0.2f s)') % float(end_time-start_time)
 
-  def run(self, inputARFI, inputBmode, inputUSCaps_Model, outputUSCaps_Seg, inputT2, inputMRCaps_Seg, outputMRCaps_Seg):
+  def ResampleVolumefromReference(self, referenceVolume, *inputVolumes):
+    """ Resamples an input volume to match ARFI reference volume spacing, size, orientation, and origin
+    """
+    # Print to Slicer CLI
+    print('Resampling volumes to match ARFI...'),
+    start_time = time.time()
+
+    for inputVolume in inputVolumes:
+        # Run Resample ScalarVectorDWIVolume Module from CLI
+        cliParams = {'inputVolume': inputVolume.GetID(), 'outputVolume': inputVolume.GetID(), 'referenceVolume': referenceVolume.GetID()}
+        cliNode = slicer.cli.run(slicer.modules.resamplescalarvectordwivolume, None, cliParams, wait_for_completion=True)
+
+    # print to Slicer CLI
+    end_time = time.time()
+    print('done (%0.2f s)') % float(end_time-start_time)
+
+  def run(self, PatientNumber, SaveUSDataBool, SaveMRDataBool,
+        inputARFI,   inputBmode,  inputCC,  inputUSCaps_Model, inputUSCG_Model, 
+                                            outputUSCaps_Seg,  outputUSCG_Seg, 
+        inputT2,  inputMRCaps_Seg,  inputMRZones_Seg,  inputMRFinal_Seg, 
+                  outputMRCaps_Seg, outputMRCG_Seg, outputMRFinal_Seg):
     """
     Run the actual algorithm
     """
-    # Check user-defined inputs and outputs
-    if not self.isValidUltrasoundData(inputARFI, inputBmode, inputUSCaps_Model, outputUSCaps_Seg):
-      slicer.util.errorDisplay('Check that Ultrasound Inputs/Outputs are correctly defined.')
-      return False
-    if not self.isValidMRIData(inputT2, inputMRCaps_Seg, outputMRCaps_Seg):
-      slicer.util.errorDisplay('Check that MRI Inputs/Outputs are correctly defined.')
-      return False
+    # # Check user-defined inputs and outputs
+    # if not self.isValidUltrasoundData(inputARFI, inputBmode, inputUSCaps_Model, outputUSCaps_Seg):
+    #   slicer.util.errorDisplay('Check that Ultrasound Inputs/Outputs are correctly defined.')
+    #   return False
+    # if not self.isValidMRIData(inputT2, inputMRCaps_Seg, outputMRCaps_Seg):
+    #   slicer.util.errorDisplay('Check that MRI Inputs/Outputs are correctly defined.')
+    #   return False
 
     # Print to Slicer CLI
     logging.info('\n\nProcessing started')
-    print('Expected Run Time: 85 seconds') # based on previous trials of the algorithm
     start_time_overall = time.time() # start timer
-
-    # Center the Ultrasound inputs (ultrasound capsule was segmented and modeled on centered volume)
-    self.CenterVolume(inputARFI)
-    self.CenterVolume(inputBmode)
-
-    # Transform US inputs using inversion transform
-    self.US_transform(inputARFI, inputBmode, inputUSCaps_Model)
+    print('Expected Run Time: 35 seconds') # based on previous trials of the algorithm
     
-    # Convert US Capsule model to labelmap
-    print('Ultrasound: '), 
-    self.ModelToLabelMap(inputARFI, inputUSCaps_Model, outputUSCaps_Seg)
+    # Center the Ultrasound volume inputs
+    self.CenterVolume(inputARFI, inputBmode, inputCC)
 
-    # Make Model of MRI input capsule segmentation using Model Maker Module and define to variable
-    intermediateMRCaps_Model = self.MRModelMaker(inputMRCaps_Seg)
+    # Transform all US inputs using inversion transform
+    self.US_transform(inputARFI, inputBmode, inputCC, inputUSCaps_Model, inputUSCG_Model)    
+    
+    # Make Model of MRI input capsule segmentation using Model Maker Module for MRI translation coordinates
+    intermediateMRCaps_Model = self.MRCapModelMaker(inputMRCaps_Seg)
 
-    # Transform MRI model and T2 volume to match Ultrasound
-    self.MR_translate(inputT2, intermediateMRCaps_Model, inputMRCaps_Seg, inputUSCaps_Model)
+    # # Transform MRI inputs to match Ultrasound so that MR capsule fits in US volume prior to registration
+    self.MR_translate(intermediateMRCaps_Model, inputUSCaps_Model, inputT2,  inputMRCaps_Seg,  inputMRZones_Seg,  inputMRFinal_Seg) # add more MRI inputs to the function
 
-    # Resample MRI T2 volume to match volume spacing, size, orientation, and origin of Ultrasound volumes
-    self.ResampleVolume(inputT2, inputARFI)
+    # Convert US Capsule and CG models to labelmap on T2 volume (use T2 for faster conversion)
+    self.ModelToLabelMap(inputT2, inputUSCaps_Model, outputUSCaps_Seg)
+    self.ModelToLabelMap(inputT2, inputUSCG_Model, outputUSCG_Seg)
 
-    # Convert MR Capsule model to labelmap with same parameters as resampled T2
-    print('MRI: '),
-    self.ModelToLabelMap(inputT2, intermediateMRCaps_Model, outputMRCaps_Seg)
+    # Use Segmentation Smoothing Module on Ultrasound Capsule and CG labels
+    self.SegmentationSmoothing(outputUSCaps_Seg, outputUSCaps_Seg) # (inputVolume, outputVolume)
+    self.SegmentationSmoothing(outputUSCG_Seg, outputUSCG_Seg) # define input and output as same volume to keep segmentation applied to output
+
+    # Use Segmentation Smoothing on MRI Capsule
+    self.SegmentationSmoothing(inputMRCaps_Seg, outputMRCaps_Seg)
+
+    # Use Segmentation Smoothing on MRI zones seg to pick out and smooth only central gland values
+    self.SegmentationSmoothing(inputMRZones_Seg, outputMRCG_Seg, 9)
+
+    # ADD STEPS HERE TO PROCESS T2 "Final Segmentations" which have MRI tumor calls
+
+    # # Resample all segmentations and volumes to match ARFI spacing, size, orientation, origin
+    self.ResampleVolumefromReference(inputARFI, outputUSCaps_Seg, outputUSCG_Seg, outputMRCaps_Seg, outputMRCG_Seg, outputMRFinal_Seg, inputT2)
+
+    # Save data if user specifies
+    # if SaveUSDataBool:
+    #     (/+PatientNumber+/)
 
     # Print Completion Status to Slicer CLI
     end_time_overall = time.time()
@@ -482,7 +687,6 @@ class PreProcessLogic(ScriptedLoadableModuleLogic):
     print('Overall Run Time: % 0.1f seconds') % float(end_time_overall-start_time_overall)
 
     return True
-
 
 class PreProcessTest(ScriptedLoadableModuleTest):
   """
