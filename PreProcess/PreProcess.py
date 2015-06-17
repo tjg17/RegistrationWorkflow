@@ -450,14 +450,15 @@ class PreProcessLogic(ScriptedLoadableModuleLogic):
     print('Centering volume...'),
     start_time = time.time()
 
-    # Use image size and spacing to find origin coordinates
-    extent = [x-1 for x in inputVolume.GetImageData().GetDimensions()] # subtract 1 from dimensions to get extent
-    spacing = [x for x in inputVolume.GetSpacing()]
-    new_origin = [a*b/2 for a,b in zip(extent,spacing)]
-    new_origin[2] = -new_origin[2] # need to make this value negative to center the volume
+    for inputVolume in inputVolumes: # cycle through all input volumes
 
-    # Set input volume origin to the new origin
-    for inputVolume in inputVolumes:
+        # Use image size and spacing to find origin coordinates
+        extent = [x-1 for x in inputVolume.GetImageData().GetDimensions()] # subtract 1 from dimensions to get extent
+        spacing = [x for x in inputVolume.GetSpacing()]
+        new_origin = [a*b/2 for a,b in zip(extent,spacing)]
+        new_origin[2] = -new_origin[2] # need to make this value negative to center the volume
+
+        # Set input volume origin to the new origin
         inputVolume.SetOrigin(new_origin)
 
     # print to Slicer CLI
@@ -586,12 +587,33 @@ class PreProcessLogic(ScriptedLoadableModuleLogic):
     # print to Slicer CLI
     end_time = time.time()
     print('done (%0.2f s)') % float(end_time-start_time)
+  
+  def SegmentationSmoothing(self, inputVolume, outputsmoothedVolume, *labelNumber):
+    """ Smooths an input volume into an outputVolume using the Segmentation Smoothing Module from SlicerProstate module
+    """
+    # Print to Slicer CLI
+    print('Smoothing label volume...'),
+    start_time = time.time()
 
-  def ResampleVolume(self, referenceVolume, inputVolumes):
+    # Define parameters for smoothing
+    parameters = {}
+    parameters["inputImageName"]= inputVolume.GetID()
+    parameters["outputImageName"]= outputsmoothedVolume.GetID()
+    if labelNumber:
+        parameters['labelNumber'] = int(labelNumber[0]) # have to grab first value of tuple for optional argument
+
+    # Rn the smoothing segmentation module from CLI
+    cliNode = slicer.cli.run(slicer.modules.segmentationsmoothing, None, parameters, wait_for_completion = True)
+
+    # print to Slicer CLI
+    end_time = time.time()
+    print('done (%0.2f s)') % float(end_time-start_time)
+
+  def ResampleVolumefromReference(self, referenceVolume, inputVolumes):
     """ Resamples an input volume to match ARFI reference volume spacing, size, orientation, and origin
     """
     # Print to Slicer CLI
-    print('Resampling to match ARFI...'),
+    print('Resampling volumes to match ARFI...'),
     start_time = time.time()
 
     for inputVolume in inputVolumes:
@@ -607,7 +629,7 @@ class PreProcessLogic(ScriptedLoadableModuleLogic):
         inputARFI,   inputBmode,  inputCC,  inputUSCaps_Model, inputUSCG_Model, 
                                             outputUSCaps_Seg,  outputUSCG_Seg, 
         inputT2,  inputMRCaps_Seg,  inputMRZones_Seg,  inputMRFinal_Seg, 
-                  outputMRCaps_Seg, outputMRZones_Seg, outputMRFinal_Seg):
+                  outputMRCaps_Seg, outputMRCG_Seg, outputMRFinal_Seg):
     """
     Run the actual algorithm
     """
@@ -621,9 +643,9 @@ class PreProcessLogic(ScriptedLoadableModuleLogic):
 
     # Print to Slicer CLI
     logging.info('\n\nProcessing started')
-    print('Expected Run Time: 200 seconds') # based on previous trials of the algorithm
     start_time_overall = time.time() # start timer
-
+    print('Expected Run Time: 100 seconds') # based on previous trials of the algorithm
+    
     # Center the Ultrasound volume inputs
     self.CenterVolume(inputARFI, inputBmode, inputCC)
 
@@ -644,27 +666,29 @@ class PreProcessLogic(ScriptedLoadableModuleLogic):
 
     # Use Segmentation Smoothing Module on Ultrasound Capsule and CG labels
     self.SegmentationSmoothing(outputUSCaps_Seg, outputUSCaps_Seg) # (inputVolume, outputVolume)
-    self.SegmentationSmoothing(outputUSCG_Seg, outputUSCaps_Seg) # define input and output as same volume to keep segmentation applied to output
+    self.SegmentationSmoothing(outputUSCG_Seg, outputUSCG_Seg) # define input and output as same volume to keep segmentation applied to output
 
     # Use Segmentation Smoothing on MRI Capsule
     self.SegmentationSmoothing(inputMRCaps_Seg, outputMRCaps_Seg)
 
     # Use Segmentation Smoothing on MRI zones seg to pick out and smooth only central gland values
+    self.SegmentationSmoothing(inputMRZones_Seg, outputMRCG_Seg, 9)
+
+    # ADD STEPS HERE TO PROCESS T2 "Final Segmentations" which have MRI tumor calls
 
     # # Resample all segmentations and volumes to match ARFI spacing, size, orientation, origin
-    self.ResampleVolume(inputARFI, **more inputs**) # reference volume as first input and any other volumes as other inputs
+    self.ResampleVolumefromReference(inputARFI, outputUSCaps_Seg, outputUSCG_Seg, outputMRCaps_Seg, outputMRCG_Seg, outputMRFinal_Seg, inputT2)
 
-    #if SaveUSDataBool:
-        # code to save the data
+    # Save data if user specifies
+    # if SaveUSDataBool:
+    #     (/+PatientNumber+/)
 
+    # Print Completion Status to Slicer CLI
+    end_time_overall = time.time()
+    logging.info('Processing completed')
+    print('Overall Run Time: % 0.1f seconds') % float(end_time_overall-start_time_overall)
 
-    # # Print Completion Status to Slicer CLI
-    # end_time_overall = time.time()
-    # logging.info('Processing completed')
-    # print('Overall Run Time: % 0.1f seconds') % float(end_time_overall-start_time_overall)
-
-    # return True
-
+    return True
 
 class PreProcessTest(ScriptedLoadableModuleTest):
   """
