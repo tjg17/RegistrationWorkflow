@@ -76,14 +76,9 @@ class PreProcessWidget(ScriptedLoadableModuleWidget):
     PatientNumberIterationsFrame, self.PatientNumberIterationsSpinBox = numericInputFrame(self.parent,"Patient Number:","Tooltip",56,110,1,0)
     PatientNumberMethodFormLayout.addWidget(PatientNumberIterationsFrame)
 
-    self.SaveUSDataCheckBox = qt.QCheckBox("Save Ultrasound Outputs")
-    self.SaveUSDataCheckBox.checked = False
-    parametersFormLayout.addWidget(self.SaveUSDataCheckBox)
-
-    self.SaveMRIDataCheckBox = qt.QCheckBox("Save MRI Outputs")
-    self.SaveMRIDataCheckBox.checked = False
-    parametersFormLayout.addWidget(self.SaveMRIDataCheckBox)
-
+    self.SaveDataCheckBox = qt.QCheckBox("Save Results to Disk")
+    self.SaveDataCheckBox.checked = False
+    parametersFormLayout.addWidget(self.SaveDataCheckBox)
 
     #
     # Parameters Area
@@ -373,7 +368,7 @@ class PreProcessWidget(ScriptedLoadableModuleWidget):
 
   def onApplyButton(self):
     logic = PreProcessLogic()
-    logic.run(str(int(self.PatientNumberIterationsSpinBox.value)), self.SaveUSDataCheckBox.checked, self.SaveMRIDataCheckBox.checked,
+    logic.run(str(int(self.PatientNumberIterationsSpinBox.value)), self.SaveDataCheckBox.checked, 
               self.USinputSelector1.currentNode(),  self.USinputSelector2.currentNode(),  self.USinputSelector3.currentNode(),  self.USinputSelector4.currentNode(),  self.USinputSelector5.currentNode(),
               self.USoutputSelector1.currentNode(), self.USoutputSelector2.currentNode(), 
               self.MRinputSelector1.currentNode(),  self.MRinputSelector2.currentNode(),  self.MRinputSelector3.currentNode(),  self.MRinputSelector4.currentNode(), 
@@ -692,12 +687,42 @@ class PreProcessLogic(ScriptedLoadableModuleLogic):
     start_time = time.time()
 
     # Run the slicer module in CLI
-    cliParams = {'inputVolume': inputVolume.GetID(), 'outputVolume': outputVolume.GetID(), 'gaussianSigma': Sigma}
+    cliParams = {'inputVolume': inputVolume.GetID(), 'outputVolume': inputVolume.GetID(), 'gaussianSigma': Sigma} # input and output defined as same
     if labelNumber:
         cliParams["labelToSmooth"] = labelNumber
 
-    cliNode = slicer.cli.run(slicer.modules.modeltolabelmap, None, cliParams, wait_for_completion=True)
+    cliNode = slicer.cli.run(slicer.modules.labelmapsmoothing, None, cliParams, wait_for_completion=True)
     
+    # print to Slicer CLI
+    end_time = time.time()
+    print('done (%0.2f s)') % float(end_time-start_time)
+
+  def ThresholdScalarVolume(self, inputVolume, newLabelVal):
+    """ Thresholds nonzero values on an input labelmap volume to the newLabelVal number while leaving all 0 values untouched
+    """
+    # Print to Slicer CLI
+    print('Changing Label Value...'),
+    start_time = time.time()
+
+    # Run the slicer module in CLI
+    cliParams = {'InputVolume': inputVolume.GetID(), 'OutputVolume': inputVolume.GetID(), 'ThresholdType': 'Above', 'ThresholdValue': 0.5, 'OutsideValue': newLabelVal} 
+    cliNode = slicer.cli.run(slicer.modules.thresholdscalarvolume, None, cliParams, wait_for_completion=True)
+    
+    # print to Slicer CLI
+    end_time = time.time()
+    print('done (%0.2f s)') % float(end_time-start_time)
+
+  def RemoveNode(self, *NodestoRemove):
+    """ Removes all nodes passed as arguments
+    """
+    # Print to Slicer CLI
+    print('Removing unnecessary nodes from MRML scene...'),
+    start_time = time.time()
+
+    # Cycle to remove input nodes
+    for node in NodestoRemove:
+        slicer.mrmlScene.RemoveNode(node)
+
     # print to Slicer CLI
     end_time = time.time()
     print('done (%0.2f s)') % float(end_time-start_time)
@@ -739,10 +764,10 @@ class PreProcessLogic(ScriptedLoadableModuleLogic):
     inputspath = '/Registration/RegistrationInputs/'
 
     # Save MRI Files
-    slicer.util.saveNode(inputT2,        (root+PatientNumber+inputspath+'mr_T2_AXIAL.nii'))
-    slicer.util.saveNode(outputMRCaps_Seg,          (root+PatientNumber+inputspath+'mr_cap-label.nrrd'))
-    slicer.util.saveNode(outputMRCG_Seg, (root+PatientNumber+inputspath+'mr_cg-label.nrrd'))
-    slicer.util.saveNode(outputMRIndex_Seg,   (root+PatientNumber+inputspath+'mr_indexlesion.nrrd'))
+    slicer.util.saveNode(inputT2,            (root+PatientNumber+inputspath+'mr_T2_AXIAL.nii'))
+    slicer.util.saveNode(outputMRCaps_Seg,   (root+PatientNumber+inputspath+'mr_cap-label.nrrd'))
+    slicer.util.saveNode(outputMRCG_Seg,     (root+PatientNumber+inputspath+'mr_cg-label.nrrd'))
+    slicer.util.saveNode(outputMRIndex_Seg,  (root+PatientNumber+inputspath+'mr_indexlesion-label.nrrd'))
 
     # print to Slicer CLI
     end_time = time.time()
@@ -751,7 +776,29 @@ class PreProcessLogic(ScriptedLoadableModuleLogic):
     # Return time elapsed
     return float(end_time-start_time)
 
-  def run(self, PatientNumber, SaveUSDataBool, SaveMRDataBool,
+  def saveScene(self, PatientNumber):
+    """ Saves MRML scene
+    """
+    # Print to Slicer CLI
+    print('Saving MRML Scene...'),
+    start_time = time.time()
+
+    # Define filepath    
+    root = '/luscinia/ProstateStudy/invivo/Patient'
+    inputspath = '/Registration/RegistrationInputs/'
+
+    # Save MRI Files
+    slicer.util.saveScene(root+PatientNumber+inputspath+PatientNumber+'_RegistrationInputScene.mrml')
+
+    # print to Slicer CLI
+    end_time = time.time()
+    print('done (%0.2f s)') % float(end_time-start_time)
+
+    # Return time elapsed
+    return float(end_time-start_time)
+
+
+  def run(self, PatientNumber, SaveDataBool,
         inputARFI,   inputBmode,  inputCC,  inputUSCaps_Model, inputUSCG_Model, 
                                             outputUSCaps_Seg,  outputUSCG_Seg, 
         inputT2,  inputMRCaps_Seg,  inputMRZones_Seg,  inputMRIndex_Seg, 
@@ -770,13 +817,13 @@ class PreProcessLogic(ScriptedLoadableModuleLogic):
     # Print to Slicer CLI
     logging.info('\n\nProcessing started')
     start_time_overall = time.time() # start timer
-    print('Expected Run Time: 35 seconds') # based on previous trials of the algorithm
+    print('Expected Algorithm Time: 95 seconds') # based on previous trials of the algorithm
     
     # Center all of the volume inputs
     self.CenterVolume(inputARFI, inputBmode, inputCC, inputT2,  inputMRCaps_Seg,  inputMRZones_Seg,  inputMRIndex_Seg)
 
     # # Transform all US inputs using inversion transform
-    # self.US_transform(inputARFI, inputBmode, inputCC, inputUSCaps_Model, inputUSCG_Model) 
+    self.US_transform(inputARFI, inputBmode, inputCC, inputUSCaps_Model, inputUSCG_Model) 
 
     # Smooth MR Final Segmentation to turn into single labelmap of capsule
     self.SegmentationSmoothing(inputMRCaps_Seg, inputMRCaps_Seg)
@@ -809,27 +856,39 @@ class PreProcessLogic(ScriptedLoadableModuleLogic):
     self.ModelToLabelMap(inputT2, indexlesion_model, outputMRIndex_Seg)
 
     # Additional smoothing of output labelmaps in label map smoothing module using sigma = 3 (SlicerProstate manuscript)
-    self.LabelMapSmoothing(outputUSCaps_Seg, 3) #(input/output volume, sigma for gaussian smoothing, [label to smooth-optional])
-    self.LabelMapSmoothing(outputUSCaps_Seg, 3)
-    self.LabelMapSmoothing(outputMRCaps_Seg, 3)
-    self.LabelMapSmoothing(outputMRCG_Seg,   3)
+    self.LabelMapSmoothing(outputUSCaps_Seg, 1) #(input/output volume, sigma for gaussian smoothing, [label to smooth-optional])
+    self.LabelMapSmoothing(outputUSCG_Seg,   1)
+    self.LabelMapSmoothing(outputMRCaps_Seg, 1)
+    self.LabelMapSmoothing(outputMRCG_Seg,   1)
+
+    # Threshold Scalar volume to change label map value for output labels
+    self.ThresholdScalarVolume(outputUSCaps_Seg,  1) #(input volume, new label value for nonzero pixels)
+    self.ThresholdScalarVolume(outputUSCG_Seg,    2) # 2 is CG label
+    self.ThresholdScalarVolume(outputMRCaps_Seg,  1) 
+    self.ThresholdScalarVolume(outputMRCG_Seg,    2)
+    self.ThresholdScalarVolume(outputMRIndex_Seg, 3) # 3 is index tumor label
+
+    # Remove Unused Intermediate Nodes before display
+    self.RemoveNode(inputUSCaps_Model, inputUSCG_Model, indexlesion_model)
+
+    # Remove input nodes that are not to be saved
+    self.RemoveNode(inputMRCaps_Seg, inputMRZones_Seg,  inputMRIndex_Seg)
 
     # Save data if user specifies and figure out time required to save data
-    if SaveUSDataBool:
+    if SaveDataBool:
         US_savetime = self.SaveUSRegistrationInputs(PatientNumber, inputARFI,   inputBmode,  inputCC, outputUSCaps_Seg,  outputUSCG_Seg)
-    else:
-        US_savetime = 0
-    if SaveMRDataBool:
         MR_savetime = self.SaveMRRegistrationInputs(PatientNumber, inputT2, outputMRCaps_Seg, outputMRCG_Seg, outputMRIndex_Seg)
+        scene_savetime = self.saveScene(PatientNumber)
+        total_savetime = US_savetime + MR_savetime + scene_savetime
     else:
-        MR_savetime = 0
+        total_savetime = 0
         
     # Print Completion Status to Slicer CLI
     end_time_overall = time.time()
     logging.info('Processing completed')
-    print('Overall Algorithm Time: % 0.1f seconds') % float(end_time_overall-start_time_overall-US_savetime-MR_savetime)
-    if SaveUSDataBool or SaveMRDataBool:
-        print('Overall Saving Time: % 0.1f seconds') % float(US_savetime+MR_savetime)
+    print('Overall Algorithm Time: % 0.1f seconds') % float(end_time_overall-start_time_overall-total_savetime)
+    if SaveDataBool:
+        print('Overall Saving Time: % 0.1f seconds') % float(total_savetime)
     print('Overall Elapsed Time: % 0.1f seconds') % float(end_time_overall-start_time_overall)
 
     return True
