@@ -248,8 +248,8 @@ class PreProcessWidget(ScriptedLoadableModuleWidget):
     self.MRinputSelector2.showHidden = False
     self.MRinputSelector2.showChildNodeTypes = False
     self.MRinputSelector2.setMRMLScene( slicer.mrmlScene )
-    self.MRinputSelector2.setToolTip( "Select PXX_caps_seg.nii.gz." )
-    parametersFormLayout.addRow("Input T2-MRI Capsule Segmentation: ", self.MRinputSelector2)
+    self.MRinputSelector2.setToolTip( "Select PXX_segmentation_final.nii.gz." )
+    parametersFormLayout.addRow("Input T2-MRI Final Segmentation: ", self.MRinputSelector2)
 
     #
     # input T2-MRI zones segmentation
@@ -280,8 +280,8 @@ class PreProcessWidget(ScriptedLoadableModuleWidget):
     self.MRinputSelector4.showHidden = False
     self.MRinputSelector4.showChildNodeTypes = False
     self.MRinputSelector4.setMRMLScene( slicer.mrmlScene )
-    self.MRinputSelector4.setToolTip( "Select PXX_segmentation_final.nrrd." )
-    parametersFormLayout.addRow("Input T2-MRI Final Segmentation: ", self.MRinputSelector4)
+    self.MRinputSelector4.setToolTip( "Select PXX_lesion1.nrrd." )
+    parametersFormLayout.addRow("Input T2-MRI Index Lesion Segmentation: ", self.MRinputSelector4)
 
     #
     # output capsule segmentation selector
@@ -329,13 +329,13 @@ class PreProcessWidget(ScriptedLoadableModuleWidget):
     self.MRoutputSelector4.addEnabled = True
     self.MRoutputSelector4.removeEnabled = True
     self.MRoutputSelector4.renameEnabled = False
-    self.MRoutputSelector4.baseName = "mr_final-label"
+    self.MRoutputSelector4.baseName = "mr_indexlesion-label"
     self.MRoutputSelector4.noneEnabled = False
     self.MRoutputSelector4.showHidden = False
     self.MRoutputSelector4.showChildNodeTypes = False
     self.MRoutputSelector4.setMRMLScene( slicer.mrmlScene )
     self.MRoutputSelector4.setToolTip( "Select ""Create new volume""." )
-    parametersFormLayout.addRow("Output T2-MRI Final Segmentation: ", self.MRoutputSelector4)
+    parametersFormLayout.addRow("Output T2-MRI Index Lesion Segmentation: ", self.MRoutputSelector4)
 
 
     #
@@ -496,8 +496,11 @@ class PreProcessLogic(ScriptedLoadableModuleLogic):
     print('Converting Model to Label Map...'),
     start_time = time.time()
 
+    # Get spacing of inputVolume and multiply by 0.8 to determine sample distance
+    samplevoxeldistance = round(0.8*min(inputVolume.GetSpacing()),2) # rounds to 2 decimal points for 80% of smallest voxel
+
     # Run the slicer module in CLI
-    cliParams = {'InputVolume': inputVolume.GetID(), 'surface': inputModel.GetID(), 'OutputVolume': outputVolume.GetID(), 'sampleDistance': 0.25, 'labelValue': 10}
+    cliParams = {'InputVolume': inputVolume.GetID(), 'surface': inputModel.GetID(), 'OutputVolume': outputVolume.GetID(), 'sampleDistance': samplevoxeldistance, 'labelValue': 10}
     cliNode = slicer.cli.run(slicer.modules.modeltolabelmap, None, cliParams, wait_for_completion=True)
     
     # print to Slicer CLI
@@ -524,6 +527,7 @@ class PreProcessLogic(ScriptedLoadableModuleLogic):
     parameters["EndLabel"] = -1
     parameters["Decimate"] = 0.1
     parameters["Smooth"] = 70
+    parameters["Name"] = 'mr-cap'
 
     # Need to create new model heirarchy node for models to enter the scene
     numNodes = slicer.mrmlScene.GetNumberOfNodesByClass( "vtkMRMLModelHierarchyNode" )
@@ -550,13 +554,68 @@ class PreProcessLogic(ScriptedLoadableModuleLogic):
     slicer.cli.run(slicer.modules.modelmaker, None, parameters, wait_for_completion=True)
 
     # Define the output model as the created model in the scene
-    outputMRModel = slicer.util.getNode('Model_1_1') # cap label has label value of 1 so model created is Model_1_1
+    outputMRModel = slicer.util.getNode('mr-cap_1_1') # cap label has label value of 1 so model created is Model_1_1
 
     # print to Slicer CLI
     end_time = time.time()
     print('done (%0.2f s)') % float(end_time-start_time)
 
     return outputMRModel    
+
+  def MRTumorModelMaker(self, inputMRlabel):
+    """ Converts MRI tumor labelmap segemntation into slicer VTK model node
+    """
+    # Print to Slicer CLI
+    print('Creating MR Model...'),
+    start_time = time.time()
+
+    # Set model parameters
+    parameters = {} 
+    parameters["InputVolume"] = inputMRlabel.GetID()
+    parameters['FilterType'] = "Laplacian"
+    parameters['GenerateAll'] = True
+    parameters["JointSmoothing"] = True
+    parameters["SplitNormals"] = False
+    parameters["PointNormals"] = False
+    parameters["SkipUnNamed"] = False
+    parameters["StartLabel"] = -1
+    parameters["EndLabel"] = -1
+    parameters["Decimate"] = 0.1
+    parameters["Smooth"] = 20
+    parameters["Name"] = 'lesion'
+
+    # Need to create new model heirarchy node for models to enter the scene
+    numNodes = slicer.mrmlScene.GetNumberOfNodesByClass( "vtkMRMLModelHierarchyNode" )
+    if numNodes > 0:
+      # user wants to delete any existing models, so take down hierarchy and
+      # delete the model nodes
+      rr = range(numNodes)
+      rr.reverse()
+      for n in rr:
+        node = slicer.mrmlScene.GetNthNodeByClass( n, "vtkMRMLModelHierarchyNode" )
+        slicer.mrmlScene.RemoveNode( node.GetModelNode() )
+        slicer.mrmlScene.RemoveNode( node )
+
+    # Create new output model heirarchy
+    outHierarchy = slicer.vtkMRMLModelHierarchyNode()
+    outHierarchy.SetScene( slicer.mrmlScene )
+    outHierarchy.SetName( "Lesion Models" )
+    slicer.mrmlScene.AddNode( outHierarchy )
+
+    # Set the parameter for the output model heirarchy
+    parameters["ModelSceneFile"] = outHierarchy
+
+    # Run the module from the command line
+    slicer.cli.run(slicer.modules.modelmaker, None, parameters, wait_for_completion=True)
+
+    # Define the output model as the created model in the scene
+    outputMRModel = slicer.util.getNode('lesion_34_34') # index lesion label has label value of 34 
+
+    # print to Slicer CLI
+    end_time = time.time()
+    print('done (%0.2f s)') % float(end_time-start_time)
+
+    return outputMRModel  
 
 
   def MR_translate(self, movingMRIModel, fixedUSModel, *MRIinputs): 
@@ -625,11 +684,78 @@ class PreProcessLogic(ScriptedLoadableModuleLogic):
     end_time = time.time()
     print('done (%0.2f s)') % float(end_time-start_time)
 
+  def LabelMapSmoothing(self, inputVolume, Sigma, *labelNumber):
+    """ Smooths an input volume labelmap using value of sigma provided (number from 0-5). Optionally smooths only selected labels if more arguments passed
+    """
+    # Print to Slicer CLI
+    print('Additional Label Map Smoothing...'),
+    start_time = time.time()
+
+    # Run the slicer module in CLI
+    cliParams = {'inputVolume': inputVolume.GetID(), 'outputVolume': outputVolume.GetID(), 'gaussianSigma': Sigma}
+    if labelNumber:
+        cliParams["labelToSmooth"] = labelNumber
+
+    cliNode = slicer.cli.run(slicer.modules.modeltolabelmap, None, cliParams, wait_for_completion=True)
+    
+    # print to Slicer CLI
+    end_time = time.time()
+    print('done (%0.2f s)') % float(end_time-start_time)
+
+  def SaveUSRegistrationInputs(self, PatientNumber, inputARFI,  inputBmode,  inputCC, outputUSCaps_Seg,  outputUSCG_Seg):
+    """ Saves Ultrasound volumes and labelmaps after preprocessing prior to registration
+    """
+    # Print to Slicer CLI
+    print('Saving Ultrasound Results...'),
+    start_time = time.time()
+
+    # Define filepath    
+    root = '/luscinia/ProstateStudy/invivo/Patient'
+    inputspath = '/Registration/RegistrationInputs/'
+
+    # Save Ultrasound Files
+    slicer.util.saveNode(inputARFI,        (root+PatientNumber+inputspath+'us_ARFI.nii'))
+    slicer.util.saveNode(inputBmode,       (root+PatientNumber+inputspath+'us_Bmode.nii'))
+    slicer.util.saveNode(inputCC,          (root+PatientNumber+inputspath+'us_ARFICCMask.nrrd'))
+    slicer.util.saveNode(outputUSCaps_Seg, (root+PatientNumber+inputspath+'us_cap-label.nrrd'))
+    slicer.util.saveNode(outputUSCG_Seg,   (root+PatientNumber+inputspath+'us_cg-label.nrrd'))
+
+    # print to Slicer CLI
+    end_time = time.time()
+    print('done (%0.2f s)') % float(end_time-start_time)
+
+    # Return time elapsed
+    return float(end_time-start_time)
+
+  def SaveMRRegistrationInputs(self, PatientNumber, inputT2, outputMRCaps_Seg, outputMRCG_Seg, outputMRIndex_Seg):
+    """ Saves MRI volumes and labelmaps after preprocessing prior to registration
+    """
+    # Print to Slicer CLI
+    print('Saving MRI Results...'),
+    start_time = time.time()
+
+    # Define filepath    
+    root = '/luscinia/ProstateStudy/invivo/Patient'
+    inputspath = '/Registration/RegistrationInputs/'
+
+    # Save MRI Files
+    slicer.util.saveNode(inputT2,        (root+PatientNumber+inputspath+'mr_T2_AXIAL.nii'))
+    slicer.util.saveNode(outputMRCaps_Seg,          (root+PatientNumber+inputspath+'mr_cap-label.nrrd'))
+    slicer.util.saveNode(outputMRCG_Seg, (root+PatientNumber+inputspath+'mr_cg-label.nrrd'))
+    slicer.util.saveNode(outputMRIndex_Seg,   (root+PatientNumber+inputspath+'mr_indexlesion.nrrd'))
+
+    # print to Slicer CLI
+    end_time = time.time()
+    print('done (%0.2f s)') % float(end_time-start_time)
+
+    # Return time elapsed
+    return float(end_time-start_time)
+
   def run(self, PatientNumber, SaveUSDataBool, SaveMRDataBool,
         inputARFI,   inputBmode,  inputCC,  inputUSCaps_Model, inputUSCG_Model, 
                                             outputUSCaps_Seg,  outputUSCG_Seg, 
-        inputT2,  inputMRCaps_Seg,  inputMRZones_Seg,  inputMRFinal_Seg, 
-                  outputMRCaps_Seg, outputMRCG_Seg, outputMRFinal_Seg):
+        inputT2,  inputMRCaps_Seg,  inputMRZones_Seg,  inputMRIndex_Seg, 
+                  outputMRCaps_Seg, outputMRCG_Seg,   outputMRIndex_Seg):
     """
     Run the actual algorithm
     """
@@ -646,45 +772,65 @@ class PreProcessLogic(ScriptedLoadableModuleLogic):
     start_time_overall = time.time() # start timer
     print('Expected Run Time: 35 seconds') # based on previous trials of the algorithm
     
-    # Center the Ultrasound volume inputs
-    self.CenterVolume(inputARFI, inputBmode, inputCC)
+    # Center all of the volume inputs
+    self.CenterVolume(inputARFI, inputBmode, inputCC, inputT2,  inputMRCaps_Seg,  inputMRZones_Seg,  inputMRIndex_Seg)
 
-    # Transform all US inputs using inversion transform
-    self.US_transform(inputARFI, inputBmode, inputCC, inputUSCaps_Model, inputUSCG_Model)    
+    # # Transform all US inputs using inversion transform
+    # self.US_transform(inputARFI, inputBmode, inputCC, inputUSCaps_Model, inputUSCG_Model) 
+
+    # Smooth MR Final Segmentation to turn into single labelmap of capsule
+    self.SegmentationSmoothing(inputMRCaps_Seg, inputMRCaps_Seg)
     
     # Make Model of MRI input capsule segmentation using Model Maker Module for MRI translation coordinates
     intermediateMRCaps_Model = self.MRCapModelMaker(inputMRCaps_Seg)
 
     # # Transform MRI inputs to match Ultrasound so that MR capsule fits in US volume prior to registration
-    self.MR_translate(intermediateMRCaps_Model, inputUSCaps_Model, inputT2,  inputMRCaps_Seg,  inputMRZones_Seg,  inputMRFinal_Seg) # add more MRI inputs to the function
+    self.MR_translate(intermediateMRCaps_Model, inputUSCaps_Model, inputT2,  inputMRCaps_Seg,  inputMRZones_Seg,  inputMRIndex_Seg) # add more MRI inputs to the function
+
+    # Make a model of index lesion tumor
+    indexlesion_model = self.MRTumorModelMaker(inputMRIndex_Seg)
 
     # Convert US Capsule and CG models to labelmap on T2 volume (use T2 for faster conversion)
     self.ModelToLabelMap(inputT2, inputUSCaps_Model, outputUSCaps_Seg)
     self.ModelToLabelMap(inputT2, inputUSCG_Model, outputUSCG_Seg)
 
-    # Use Segmentation Smoothing Module on Ultrasound Capsule and CG labels
+    # Use Segmentation Smoothing Module on US and MRI Capsule and US CG labels
     self.SegmentationSmoothing(outputUSCaps_Seg, outputUSCaps_Seg) # (inputVolume, outputVolume)
     self.SegmentationSmoothing(outputUSCG_Seg, outputUSCG_Seg) # define input and output as same volume to keep segmentation applied to output
-
-    # Use Segmentation Smoothing on MRI Capsule
     self.SegmentationSmoothing(inputMRCaps_Seg, outputMRCaps_Seg)
 
     # Use Segmentation Smoothing on MRI zones seg to pick out and smooth only central gland values
-    self.SegmentationSmoothing(inputMRZones_Seg, outputMRCG_Seg, 9)
+    self.SegmentationSmoothing(inputMRZones_Seg, outputMRCG_Seg, 9) # label value 9
 
-    # ADD STEPS HERE TO PROCESS T2 "Final Segmentations" which have MRI tumor calls
+    # Resample all segmentations and volumes to match ARFI spacing, size, orientation, origin
+    self.ResampleVolumefromReference(inputARFI, outputUSCaps_Seg, outputUSCG_Seg, outputMRCaps_Seg, outputMRCG_Seg, outputMRIndex_Seg, inputT2)
 
-    # # Resample all segmentations and volumes to match ARFI spacing, size, orientation, origin
-    self.ResampleVolumefromReference(inputARFI, outputUSCaps_Seg, outputUSCG_Seg, outputMRCaps_Seg, outputMRCG_Seg, outputMRFinal_Seg, inputT2)
+    # Model to labelmap for tumor model onto resampled MRI (** LONGEST STEP **)
+    self.ModelToLabelMap(inputT2, indexlesion_model, outputMRIndex_Seg)
 
-    # Save data if user specifies
-    # if SaveUSDataBool:
-    #     (/+PatientNumber+/)
+    # Additional smoothing of output labelmaps in label map smoothing module using sigma = 3 (SlicerProstate manuscript)
+    self.LabelMapSmoothing(outputUSCaps_Seg, 3) #(input/output volume, sigma for gaussian smoothing, [label to smooth-optional])
+    self.LabelMapSmoothing(outputUSCaps_Seg, 3)
+    self.LabelMapSmoothing(outputMRCaps_Seg, 3)
+    self.LabelMapSmoothing(outputMRCG_Seg,   3)
 
+    # Save data if user specifies and figure out time required to save data
+    if SaveUSDataBool:
+        US_savetime = self.SaveUSRegistrationInputs(PatientNumber, inputARFI,   inputBmode,  inputCC, outputUSCaps_Seg,  outputUSCG_Seg)
+    else:
+        US_savetime = 0
+    if SaveMRDataBool:
+        MR_savetime = self.SaveMRRegistrationInputs(PatientNumber, inputT2, outputMRCaps_Seg, outputMRCG_Seg, outputMRIndex_Seg)
+    else:
+        MR_savetime = 0
+        
     # Print Completion Status to Slicer CLI
     end_time_overall = time.time()
     logging.info('Processing completed')
-    print('Overall Run Time: % 0.1f seconds') % float(end_time_overall-start_time_overall)
+    print('Overall Algorithm Time: % 0.1f seconds') % float(end_time_overall-start_time_overall-US_savetime-MR_savetime)
+    if SaveUSDataBool or SaveMRDataBool:
+        print('Overall Saving Time: % 0.1f seconds') % float(US_savetime+MR_savetime)
+    print('Overall Elapsed Time: % 0.1f seconds') % float(end_time_overall-start_time_overall)
 
     return True
 
