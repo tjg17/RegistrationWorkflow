@@ -29,6 +29,13 @@ add_subdirectory(New Module)
 add_subdirectory(Distance Map Registration)
 add_subdirectory(DistanceMapRegister)
 add_subdirectory(PreProcess)
+add_subdirectory(Segmentation Smoothing)
+add_subdirectory(Quad Edge Surface Mesher)
+add_subdirectory(Distance Map Based Registration)
+add_subdirectory(SegmentationSmoothing)
+add_subdirectory(Custom Distance Map Register)
+add_subdirectory(CustomDistanceMapRegistration)
+add_subdirectory(CustomRegister)
 ## NEXT_MODULE
 
 #-----------------------------------------------------------------------------
