@@ -864,9 +864,10 @@ class PreProcessLogic(ScriptedLoadableModuleLogic):
     # Threshold Scalar volume to change label map value for output labels
     self.ThresholdScalarVolume(outputUSCaps_Seg,  1) #(input volume, new label value for nonzero pixels)
     self.ThresholdScalarVolume(outputUSCG_Seg,    2) # 2 is CG label
-    self.ThresholdScalarVolume(outputMRCaps_Seg,  1) 
+    self.ThresholdScalarVolume(outputMRCaps_Seg,  1) # 1 is Capsule label
     self.ThresholdScalarVolume(outputMRCG_Seg,    2)
     self.ThresholdScalarVolume(outputMRIndex_Seg, 3) # 3 is index tumor label
+    self.ThresholdScalarVolume(inputCC,         255) # 255 for CC Mask label
 
     # Remove Unused Intermediate Nodes before display
     self.RemoveNode(inputUSCaps_Model, inputUSCG_Model, indexlesion_model)
