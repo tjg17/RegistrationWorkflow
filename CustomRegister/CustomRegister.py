@@ -338,6 +338,7 @@ class CustomRegisterLogic(ScriptedLoadableModuleLogic):
     
     fixedLabelNodeID      = parameterNode.GetAttribute('FixedLabelNodeID')
     movingLabelNodeID     = parameterNode.GetAttribute('MovingLabelNodeID')
+    
     # outputVolumeNodeID    = parameterNode.GetAttribute('OutputVolumeNodeID')
 
     affineTransformNode   = slicer.mrmlScene.GetNodeByID(parameterNode.GetAttribute('AffineTransformNodeID'))
