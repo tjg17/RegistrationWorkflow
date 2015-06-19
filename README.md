@@ -1,5 +1,5 @@
 # RegistrationWorkflow
-This repository contains a Python scripted extension for 3D Slicer to process ARFI/Bmode ultrasound volumes and T2 MRI volumes as well as capsule segmentations prior to an image-based segmentation using the "Distance Map Based Registration" available in the SlicerProstate module.  
+This repository contains a Python scripted extension for 3D Slicer to process ARFI/Bmode ultrasound volumes and T2 MRI volumes and segmentations prior to an image-based registration using the "Distance Map Based Registration" available in the SlicerProstate module.  
 
 To use this extension for the  first time:  
 
@@ -11,17 +11,39 @@ To use this extension for the  first time:
 6) Modules can be selected by searching in the search box in the toolbar  
 
 
-Example Output to Slicer CLI of this extension:  
+Example Output to Slicer Command Line Interface of this extension:  
 
 Processing started  
-Expected Run Time: 100 seconds  
-Centering volume... done (0.01 s)  
-Centering volume... done (0.01 s)  
-Transforming Ultrasound inputs... done (0.02 s)  
-Ultrasound:  Converting Model to Label Map... done (40.23 s)  
-Creating MR Model... done (0.82 s)  
-Translating T2 volume and MRI model... done (0.02 s)  
-Resampling T2 volume to match ARFI... done (3.59 s)  
-MRI:  Converting Model to Label Map... done (39.30 s)  
+Expected Algorithm Time: 95 seconds  
+Centering volume... done (0.17 s)  
+Transforming Ultrasound input... done (0.06 s)  
+Smoothing label volume... done (2.25 s)  
+Creating MR Model... done (1.94 s)  
+Translating MRI inputs to U/S capsule... done (0.09 s)  
+Creating MR Model... done (0.49 s)  
+Converting Model to Label Map... done (3.57 s)  
+Converting Model to Label Map... done (3.36 s)  
+Smoothing label volume... done (2.09 s)  
+Smoothing label volume... done (2.11 s)  
+Smoothing label volume... done (2.33 s)  
+Smoothing label volume... done (2.16 s)  
+Resampling volumes to match ARFI... done (13.59 s)  
+Converting Model to Label Map... done (37.55 s)  
+Additional Label Map Smoothing... done (7.71 s)  
+Additional Label Map Smoothing... done (4.55 s)  
+Additional Label Map Smoothing... done (5.56 s)  
+Additional Label Map Smoothing... done (3.83 s)  
+Changing Label Value... done (0.13 s)  
+Changing Label Value... done (0.13 s)  
+Changing Label Value... done (0.13 s)  
+Changing Label Value... done (0.13 s)  
+Changing Label Value... done (0.11 s)  
+Removing unnecessary nodes from MRML scene... done (0.08 s)  
+Removing unnecessary nodes from MRML scene... done (0.09 s)  
+Saving Ultrasound Results... done (5.14 s)  
+Saving MRI Results... done (4.76 s)  
+Saving MRML Scene... done (2.10 s)  
 Processing completed  
-Overall Run Time:  84.0 seconds  
+Overall Algorithm Time:  94.2 seconds  
+Overall Saving Time:  12.0 seconds  
+Overall Elapsed Time:  106.2 seconds  
