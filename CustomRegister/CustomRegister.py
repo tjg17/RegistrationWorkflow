@@ -237,18 +237,12 @@ class CustomRegisterWidget(ScriptedLoadableModuleWidget):
       self.parameterNode.SetAttribute('MovingImageNodeID', self.movingImageSelector.currentNode().GetID())
     if self.movingImageLabelSelector.currentNode():
       self.parameterNode.SetAttribute('MovingLabelNodeID', self.movingImageLabelSelector.currentNode().GetID())
-    '''
-    if self.outputImageSelector.currentNode():
-      self.parameterNode.SetAttribute('OutputVolumeNodeID', self.outputImageSelector.currentNode().GetID())
-    '''
     if self.affineTransformSelector.currentNode():
       self.parameterNode.SetAttribute('AffineTransformNodeID', self.affineTransformSelector.currentNode().GetID())
     if self.bsplineTransformSelector.currentNode():
       self.parameterNode.SetAttribute('BSplineTransformNodeID', self.bsplineTransformSelector.currentNode().GetID())
-    logic.run(self.parameterNode)
 
-    # resample moving volume
-    # logic.resample(self.parameterNode)
+    logic.run(self.parameterNode)
 
     # configure the GUI
     logic.showResults(self.parameterNode)
@@ -266,9 +260,9 @@ class CustomRegisterWidget(ScriptedLoadableModuleWidget):
 
     movingSurface = slicer.mrmlScene.GetNodeByID(self.parameterNode.GetAttribute('MovingLabelSurfaceID'))
 
-    affineTransform = slicer.mrmlScene.GetNodeByID(self.parameterNode.GetAttribute('AffineTransformNodeID'))
-    bsplineTransform = slicer.mrmlScene.GetNodeByID(self.parameterNode.GetAttribute('BSplineTransformNodeID'))
-    affineDisplayNode = affineTransform.GetDisplayNode()
+    affineTransform    = slicer.mrmlScene.GetNodeByID(self.parameterNode.GetAttribute('AffineTransformNodeID'))
+    bsplineTransform   = slicer.mrmlScene.GetNodeByID(self.parameterNode.GetAttribute('BSplineTransformNodeID'))
+    affineDisplayNode  = affineTransform.GetDisplayNode()
     bsplineDisplayNode = bsplineTransform.GetDisplayNode()
 
     if mode == 1:
@@ -342,13 +336,16 @@ class CustomRegisterLogic(ScriptedLoadableModuleLogic):
       return False
     '''
     
-    fixedLabelNodeID = parameterNode.GetAttribute('FixedLabelNodeID')
-    movingLabelNodeID = parameterNode.GetAttribute('MovingLabelNodeID')
-    outputVolumeNodeID = parameterNode.GetAttribute('OutputVolumeNodeID')
-    affineTransformNode = slicer.mrmlScene.GetNodeByID(parameterNode.GetAttribute('AffineTransformNodeID'))
-    bsplineTransformNode = slicer.mrmlScene.GetNodeByID(parameterNode.GetAttribute('BSplineTransformNodeID'))
+    fixedLabelNodeID      = parameterNode.GetAttribute('FixedLabelNodeID')
+    movingLabelNodeID     = parameterNode.GetAttribute('MovingLabelNodeID')
+    # outputVolumeNodeID    = parameterNode.GetAttribute('OutputVolumeNodeID')
+
+    affineTransformNode   = slicer.mrmlScene.GetNodeByID(parameterNode.GetAttribute('AffineTransformNodeID'))
+    bsplineTransformNode  = slicer.mrmlScene.GetNodeByID(parameterNode.GetAttribute('BSplineTransformNodeID'))
 
     logging.info('Processing started')
+    start_time_overall = time.time() # start timer
+
 
     # crop the labels
     import SimpleITK as sitk
@@ -362,7 +359,6 @@ class CustomRegisterLogic(ScriptedLoadableModuleLogic):
     parameterNode.SetAttribute('FixedLabelDistanceMapID',fixedLabelDistanceMap.GetID())
     fixedLabelSmoothed = slicer.util.getNode(slicer.mrmlScene.GetNodeByID(fixedLabelNodeID).GetName()+'-Smoothed')
     parameterNode.SetAttribute('FixedLabelSmoothedID',fixedLabelSmoothed.GetID())
-
     print('Fixed label processing done')
 
     movingLabelDistanceMap = self.preProcessLabel(movingLabelNodeID, bbMin, bbMax)
@@ -371,23 +367,22 @@ class CustomRegisterLogic(ScriptedLoadableModuleLogic):
     parameterNode.SetAttribute('MovingLabelSmoothedID',movingLabelSmoothed.GetID())
     print('Moving label processing done')
 
-    # run registration
-
+    # run affine registration
     registrationParameters = {'fixedVolume':fixedLabelDistanceMap.GetID(), 'movingVolume':movingLabelDistanceMap.GetID(),'useRigid':True,'useAffine':True,'numberOfSamples':'10000','costMetric':'MSE','outputTransform':affineTransformNode.GetID()}
     slicer.cli.run(slicer.modules.brainsfit, None, registrationParameters, wait_for_completion=True)
-
     parameterNode.SetAttribute('AffineTransformNodeID',affineTransformNode.GetID())
-
     print('affineRegistrationCompleted!')
 
+    # run bspliine registration
     registrationParameters = {'fixedVolume':fixedLabelDistanceMap.GetID(), 'movingVolume':movingLabelDistanceMap.GetID(),'useBSpline':True,'splineGridSize':'3,3,3','numberOfSamples':'10000','costMetric':'MSE','bsplineTransform':bsplineTransformNode.GetID(),'initialTransform':affineTransformNode.GetID()}
     slicer.cli.run(slicer.modules.brainsfit, None, registrationParameters, wait_for_completion=True)
-
     parameterNode.SetAttribute('BSplineTransformNodeID',bsplineTransformNode.GetID())
-
     print('bsplineRegistrationCompleted!')
 
+    # Print results to Slicer CLI
+    end_time_overall = time.time()
     logging.info('Processing completed')
+    print('Overall Algorithm Time: % 0.1f seconds') % float(end_time_overall-start_time_overall)
 
     return True
 
@@ -502,6 +497,9 @@ class CustomRegisterLogic(ScriptedLoadableModuleLogic):
 
   def preProcessLabel(self,labelNodeID,bbMin,bbMax):
 
+    # Start the timer
+    start_time = time.time()
+
     print('Label node ID: '+labelNodeID)
 
     labelNode = slicer.util.getNode(labelNodeID)
@@ -542,7 +540,7 @@ class CustomRegisterLogic(ScriptedLoadableModuleLogic):
     '''
     TODO:
      * output volume node probably not needed here
-     * intermediate nodes should probably be hidden
+     * intermediate nodes should probably be hidden - AGREED!
     '''
 
     dt = sitk.SignedMaurerDistanceMapImageFilter()
@@ -554,6 +552,10 @@ class CustomRegisterLogic(ScriptedLoadableModuleLogic):
     print(smoothLabelAddress)
     distanceImage = dt.Execute(smoothLabelImage)
     sitkUtils.PushToSlicer(distanceImage, distanceMapName, overwrite=True)
+
+    # print to Slicer CLI
+    end_time = time.time()
+    print('Label preprocessing done (%0.2f s)') % float(end_time-start_time)
 
     return slicer.util.getNode(distanceMapName)
 
