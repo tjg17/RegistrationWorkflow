@@ -182,22 +182,61 @@ class CreateRegisterLabelLogic(ScriptedLoadableModuleLogic):
       return False
     return True
 
+  def ThresholdAbove(self, inputVolume, thresholdVal, newLabelVal):
+    """ Thresholds nonzero values on an input labelmap volume to the newLabelVal number while leaving all 0 values untouched
+    """
+    # Print to Slicer CLI
+    print('Changing Label Value...'),
+    start_time = time.time()
+
+    # Run the slicer module in CLI
+    cliParams = {'InputVolume': inputVolume.GetID(), 'OutputVolume': inputVolume.GetID(), 'ThresholdType': 'Above', 'ThresholdValue': thresholdVal, 'OutsideValue': newLabelVal} 
+    cliNode = slicer.cli.run(slicer.modules.thresholdscalarvolume, None, cliParams, wait_for_completion=True)
+    
+    # print to Slicer CLI
+    end_time = time.time()
+    print('done (%0.2f s)') % float(end_time-start_time)
+
+  def ImageLabelCombine(self, inputLabelA, inputLabelB, outputLabel):
+    """ Combines labelmaps with label A overwriting label D if any overlapping area
+    """
+    # Print to Slicer CLI
+    print('Combining Labels...'),
+    start_time = time.time()
+
+    # Run the slicer module in CLI
+    cliParams = {'InputLabelMap_A': inputLabelA.GetID(),'InputLabelMap_B': inputLabelB.GetID(), 'OutputVolume': outputLabel.GetID()} 
+    cliNode = slicer.cli.run(slicer.modules.imagelabelcombine, None, cliParams, wait_for_completion=True)
+    
+    # print to Slicer CLI
+    end_time = time.time()
+    print('done (%0.2f s)') % float(end_time-start_time)
+
   def run(self, inputCapsule, inputCG, inputVM, outputLabel):
     """
     Run the actual algorithm
     """
 
-    logging.info('Processing started')
+    # Print to Slicer CLI
+    logging.info('\n\nProcessing started')
+    start_time_overall = time.time() # start timer
 
-    # Compute the thresholded output volume using the Threshold Scalar Volume CLI module
-    cliParams = {'InputVolume': inputVolume.GetID(), 'OutputVolume': outputVolume.GetID(), 'ThresholdValue' : imageThreshold, 'ThresholdType' : 'Above'}
-    cliNode = slicer.cli.run(slicer.modules.thresholdscalarvolume, None, cliParams, wait_for_completion=True)
+    # Combine CG and Capsule Labelmaps
+    self.ImageLabelCombine(inputCG, inputCapsule, outputLabel) 
 
-    # Capture screenshot
-    if enableScreenshots:
-      self.takeScreenshot('CreateRegisterLabelTest-Start','MyScreenshot',-1)
+    # Threshold out areas of only CG and areas of CG/capsule overlap to get only PZ
+    self.ThresholdAbove(outputLabel, 1.5, 0) # PZ has value of 1
 
+    # Threshold VM to 1 before adding
+    self.ThresholdAbove(inputVM, 0.5, 1) #(input volume, new label value for nonzero pixels)
+
+    # Add VM to output Label
+    self.ImageLabelCombine(outputLabel, inputVM, outputLabel) # first label overwrites 2nd label
+
+    # Print to Slicer CLI
+    end_time_overall = time.time()
     logging.info('Processing completed')
+    print('Overall Algorithm Time: % 0.1f seconds') % float(end_time_overall-start_time_overall)
 
     return True
 
