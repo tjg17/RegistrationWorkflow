@@ -632,7 +632,7 @@ class PreProcessLogic(ScriptedLoadableModuleLogic):
     translate_transform.SetElement(0,3,fixed_bounds[0] - moving_bounds[0]) # lines up right side of prostate 
     
     # OPTIONAL: print transform to Python CLI
-    # print translate_transform 
+    print translate_transform 
 
     # Apply transform to all MRI inputs
     for MRIinput in MRIinputs:
