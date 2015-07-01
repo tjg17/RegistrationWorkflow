@@ -834,7 +834,8 @@ class PreProcessLogic(ScriptedLoadableModuleLogic):
     # # Transform MRI inputs to match Ultrasound so that MR capsule fits in US volume prior to registration
     self.MR_translate(intermediateMRCaps_Model, inputUSCaps_Model, inputT2,  inputMRCaps_Seg,  inputMRZones_Seg,  inputMRIndex_Seg) # add more MRI inputs to the function
 
-    # Make a model of index lesion tumor
+    # Make a model of index lesion tumor after changing label value to 34
+    self.ThresholdScalarVolume(inputMRIndex_Seg,  34)
     indexlesion_model = self.MRTumorModelMaker(inputMRIndex_Seg)
 
     # Convert US Capsule and CG models to labelmap on T2 volume (use T2 for faster conversion)
