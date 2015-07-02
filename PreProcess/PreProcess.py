@@ -169,6 +169,36 @@ class PreProcessWidget(ScriptedLoadableModuleWidget):
     parametersFormLayout.addRow("Input U/S Central Gland Model: ", self.USinputSelector5)
 
     #
+    # input ultrasound veramontanum VTK model
+    #
+    self.USinputSelector51 = slicer.qMRMLNodeComboBox()
+    self.USinputSelector51.nodeTypes = ( ("vtkMRMLModelNode"), "" )
+    self.USinputSelector51.selectNodeUponCreation = True
+    self.USinputSelector51.addEnabled = False
+    self.USinputSelector51.removeEnabled = False
+    self.USinputSelector51.noneEnabled = False
+    self.USinputSelector51.showHidden = False
+    self.USinputSelector51.showChildNodeTypes = False
+    self.USinputSelector51.setMRMLScene( slicer.mrmlScene )
+    self.USinputSelector51.setToolTip( "Select us_vm.vtk model." )
+    parametersFormLayout.addRow("Input U/S Veramontanum Model: ", self.USinputSelector51)
+
+    #
+    # input ultrasound index lesion VTK model
+    #
+    self.USinputSelector6 = slicer.qMRMLNodeComboBox()
+    self.USinputSelector6.nodeTypes = ( ("vtkMRMLModelNode"), "" )
+    self.USinputSelector6.selectNodeUponCreation = True
+    self.USinputSelector6.addEnabled = False
+    self.USinputSelector6.removeEnabled = False
+    self.USinputSelector6.noneEnabled = False
+    self.USinputSelector6.showHidden = False
+    self.USinputSelector6.showChildNodeTypes = False
+    self.USinputSelector6.setMRMLScene( slicer.mrmlScene )
+    self.USinputSelector6.setToolTip( "Select us_indexlesion.vtk model." )
+    parametersFormLayout.addRow("Input U/S Index Lesion Model: ", self.USinputSelector6)
+
+    #
     # output capsule segmentation selector
     #
     self.USoutputSelector1 = slicer.qMRMLNodeComboBox()
@@ -203,6 +233,43 @@ class PreProcessWidget(ScriptedLoadableModuleWidget):
     self.USoutputSelector2.setMRMLScene( slicer.mrmlScene )
     self.USoutputSelector2.setToolTip( "Select ""Create new volume""." )
     parametersFormLayout.addRow("Output U/S Central Gland Segment: ", self.USoutputSelector2)
+
+    #
+    # output index lesion segmentation selector
+    #
+    self.USoutputSelector3 = slicer.qMRMLNodeComboBox()
+    self.USoutputSelector3.nodeTypes = ( ("vtkMRMLScalarVolumeNode"), "" )
+    self.USoutputSelector3.addAttribute( "vtkMRMLScalarVolumeNode", "LabelMap", 1 ) # this one is a labelmap
+    self.USoutputSelector3.selectNodeUponCreation = True
+    self.USoutputSelector3.addEnabled = True
+    self.USoutputSelector3.removeEnabled = True
+    self.USoutputSelector3.renameEnabled = False
+    self.USoutputSelector3.baseName = "us_indexlesion-label"
+    self.USoutputSelector3.noneEnabled = False
+    self.USoutputSelector3.showHidden = False
+    self.USoutputSelector3.showChildNodeTypes = False
+    self.USoutputSelector3.setMRMLScene( slicer.mrmlScene )
+    self.USoutputSelector3.setToolTip( "Select ""Create new volume""." )
+    parametersFormLayout.addRow("Output U/S Index Lesion: ", self.USoutputSelector3)
+
+    #
+    # output registration label selector
+    #
+    self.USoutputSelector4 = slicer.qMRMLNodeComboBox()
+    self.USoutputSelector4.nodeTypes = ( ("vtkMRMLScalarVolumeNode"), "" )
+    self.USoutputSelector4.addAttribute( "vtkMRMLScalarVolumeNode", "LabelMap", 1 ) # this one is a labelmap
+    self.USoutputSelector4.selectNodeUponCreation = True
+    self.USoutputSelector4.addEnabled = True
+    self.USoutputSelector4.removeEnabled = True
+    self.USoutputSelector4.renameEnabled = False
+    self.USoutputSelector4.baseName = "us_register-label"
+    self.USoutputSelector4.noneEnabled = False
+    self.USoutputSelector4.showHidden = False
+    self.USoutputSelector4.showChildNodeTypes = False
+    self.USoutputSelector4.setMRMLScene( slicer.mrmlScene )
+    self.USoutputSelector4.setToolTip( "Select ""Create new volume""." )
+    parametersFormLayout.addRow("Output U/S Registration Label: ", self.USoutputSelector4)
+
 
     #
     # Parameters Area
@@ -369,7 +436,7 @@ class PreProcessWidget(ScriptedLoadableModuleWidget):
   def onApplyButton(self):
     logic = PreProcessLogic()
     logic.run(str(int(self.PatientNumberIterationsSpinBox.value)), self.SaveDataCheckBox.checked, 
-              self.USinputSelector1.currentNode(),  self.USinputSelector2.currentNode(),  self.USinputSelector3.currentNode(),  self.USinputSelector4.currentNode(),  self.USinputSelector5.currentNode(),
+              self.USinputSelector1.currentNode(),  self.USinputSelector2.currentNode(),  self.USinputSelector3.currentNode(),  self.USinputSelector4.currentNode(),  self.USinputSelector5.currentNode(), self.USinputSelector6.currentNode(),
               self.USoutputSelector1.currentNode(), self.USoutputSelector2.currentNode(), 
               self.MRinputSelector1.currentNode(),  self.MRinputSelector2.currentNode(),  self.MRinputSelector3.currentNode(),  self.MRinputSelector4.currentNode(), 
                                                     self.MRoutputSelector2.currentNode(), self.MRoutputSelector3.currentNode(), self.MRoutputSelector4.currentNode())
@@ -799,7 +866,7 @@ class PreProcessLogic(ScriptedLoadableModuleLogic):
 
 
   def run(self, PatientNumber, SaveDataBool,
-        inputARFI,   inputBmode,  inputCC,  inputUSCaps_Model, inputUSCG_Model, 
+        inputARFI,   inputBmode,  inputCC,  inputUSCaps_Model, inputUSCG_Model, inputUSIndex_Model,
                                             outputUSCaps_Seg,  outputUSCG_Seg, 
         inputT2,  inputMRCaps_Seg,  inputMRZones_Seg,  inputMRIndex_Seg, 
                   outputMRCaps_Seg, outputMRCG_Seg,   outputMRIndex_Seg):
