@@ -3,6 +3,7 @@ import unittest
 from __main__ import vtk, qt, ctk, slicer
 from slicer.ScriptedLoadableModule import *
 import logging
+import time
 
 import SimpleITK as sitk
 import sitkUtils
@@ -46,7 +47,7 @@ class CustomRegisterWidget(ScriptedLoadableModuleWidget):
   def setup(self):
     ScriptedLoadableModuleWidget.setup(self)
 
-    # Instantiate and connect widgets ...
+     # Instantiate and connect widgets ...
 
     #
     # Parameters Area
@@ -64,7 +65,7 @@ class CustomRegisterWidget(ScriptedLoadableModuleWidget):
     self.fixedImageSelector = slicer.qMRMLNodeComboBox()
     self.fixedImageSelector.nodeTypes = ( ("vtkMRMLScalarVolumeNode"), "" )
     self.fixedImageSelector.selectNodeUponCreation = True
-    self.fixedImageSelector.addEnabled = False
+    self.fixedImageSelector.addEnabled = True
     self.fixedImageSelector.removeEnabled = False
     self.fixedImageSelector.noneEnabled = True
     self.fixedImageSelector.showHidden = False
@@ -77,7 +78,8 @@ class CustomRegisterWidget(ScriptedLoadableModuleWidget):
     # fixed image label selector
     #
     self.fixedImageLabelSelector = slicer.qMRMLNodeComboBox()
-    self.fixedImageLabelSelector.nodeTypes = ( ("vtkMRMLLabelMapVolumeNode"), "" )
+    self.fixedImageLabelSelector.nodeTypes = ( ("vtkMRMLScalarVolumeNode"), "" )
+    self.fixedImageLabelSelector.addAttribute( "vtkMRMLScalarVolumeNode", "LabelMap", 1 ) # this one is a labelmap
     self.fixedImageLabelSelector.selectNodeUponCreation = True
     self.fixedImageLabelSelector.addEnabled = False
     self.fixedImageLabelSelector.removeEnabled = False
@@ -107,7 +109,8 @@ class CustomRegisterWidget(ScriptedLoadableModuleWidget):
     # moving image label selector
     #
     self.movingImageLabelSelector = slicer.qMRMLNodeComboBox()
-    self.movingImageLabelSelector.nodeTypes = ( ("vtkMRMLLabelMapVolumeNode"), "" )
+    self.movingImageLabelSelector.nodeTypes = ( ("vtkMRMLScalarVolumeNode"), "" )
+    self.movingImageLabelSelector.addAttribute( "vtkMRMLScalarVolumeNode", "LabelMap", 1 ) # this one is a labelmap
     self.movingImageLabelSelector.selectNodeUponCreation = True
     self.movingImageLabelSelector.addEnabled = False
     self.movingImageLabelSelector.removeEnabled = False
@@ -117,7 +120,6 @@ class CustomRegisterWidget(ScriptedLoadableModuleWidget):
     self.movingImageLabelSelector.setMRMLScene( slicer.mrmlScene )
     self.movingImageLabelSelector.setToolTip( "Segmentation of the moving image" )
     parametersFormLayout.addRow("Segmentation of the moving Image: ", self.movingImageLabelSelector)
-
     #
     # Affine output transform selector
     #
