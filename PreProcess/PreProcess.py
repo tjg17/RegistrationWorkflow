@@ -214,7 +214,7 @@ class PreProcessWidget(ScriptedLoadableModuleWidget):
     self.USoutputSelector1.showChildNodeTypes = False
     self.USoutputSelector1.setMRMLScene( slicer.mrmlScene )
     self.USoutputSelector1.setToolTip( "Select ""Create new volume""." )
-    parametersFormLayout.addRow("Output U/S Capsule Segmentation: ", self.USoutputSelector1)
+    parametersFormLayout.addRow("Output U/S Capsule Segment: ", self.USoutputSelector1)
 
     #
     # output central gland segmentation selector
@@ -235,6 +235,24 @@ class PreProcessWidget(ScriptedLoadableModuleWidget):
     parametersFormLayout.addRow("Output U/S Central Gland Segment: ", self.USoutputSelector2)
 
     #
+    # output veramontanum segmentation selector
+    #
+    self.USoutputSelector21 = slicer.qMRMLNodeComboBox()
+    self.USoutputSelector21.nodeTypes = ( ("vtkMRMLScalarVolumeNode"), "" )
+    self.USoutputSelector21.addAttribute( "vtkMRMLScalarVolumeNode", "LabelMap", 1 ) # this one is a labelmap
+    self.USoutputSelector21.selectNodeUponCreation = True
+    self.USoutputSelector21.addEnabled = True
+    self.USoutputSelector21.removeEnabled = True
+    self.USoutputSelector21.renameEnabled = False
+    self.USoutputSelector21.baseName = "us_vm-label"
+    self.USoutputSelector21.noneEnabled = False
+    self.USoutputSelector21.showHidden = False
+    self.USoutputSelector21.showChildNodeTypes = False
+    self.USoutputSelector21.setMRMLScene( slicer.mrmlScene )
+    self.USoutputSelector21.setToolTip( "Select ""Create new volume""." )
+    parametersFormLayout.addRow("Output U/S Veramontanum Segment: ", self.USoutputSelector21)
+
+    #
     # output index lesion segmentation selector
     #
     self.USoutputSelector3 = slicer.qMRMLNodeComboBox()
@@ -250,7 +268,7 @@ class PreProcessWidget(ScriptedLoadableModuleWidget):
     self.USoutputSelector3.showChildNodeTypes = False
     self.USoutputSelector3.setMRMLScene( slicer.mrmlScene )
     self.USoutputSelector3.setToolTip( "Select ""Create new volume""." )
-    parametersFormLayout.addRow("Output U/S Index Lesion: ", self.USoutputSelector3)
+    parametersFormLayout.addRow("Output U/S Index Lesion Segment: ", self.USoutputSelector3)
 
     #
     # output registration label selector
@@ -330,6 +348,22 @@ class PreProcessWidget(ScriptedLoadableModuleWidget):
     parametersFormLayout.addRow("Input T2-MRI Zones Segmentation: ", self.MRinputSelector3)
 
     #
+    # input T2-MRI veramontanum segmentation
+    #
+    self.MRinputSelector31 = slicer.qMRMLNodeComboBox()
+    self.MRinputSelector31.nodeTypes = ( ("vtkMRMLScalarVolumeNode"), "" )
+    self.MRinputSelector31.addAttribute( "vtkMRMLScalarVolumeNode", "LabelMap", 1 )
+    self.MRinputSelector31.selectNodeUponCreation = True
+    self.MRinputSelector31.addEnabled = False
+    self.MRinputSelector31.removeEnabled = False
+    self.MRinputSelector31.noneEnabled = False
+    self.MRinputSelector31.showHidden = False
+    self.MRinputSelector31.showChildNodeTypes = False
+    self.MRinputSelector31.setMRMLScene( slicer.mrmlScene )
+    self.MRinputSelector31.setToolTip( "Select veramontanum segment" )
+    parametersFormLayout.addRow("Input T2-MRI Veramontanum Segmentation: ", self.MRinputSelector31)
+
+    #
     # input T2-MRI cancer/BPH/overall segmentation
     #
     self.MRinputSelector4 = slicer.qMRMLNodeComboBox()
@@ -382,7 +416,25 @@ class PreProcessWidget(ScriptedLoadableModuleWidget):
     parametersFormLayout.addRow("Output T2-MRI Central Gland Segment: ", self.MRoutputSelector3)
 
     #
-    # output final segmentation (tumors/BPH/etc) selector
+    # output veramontanum segmentation selector
+    #
+    self.MRoutputSelector31 = slicer.qMRMLNodeComboBox()
+    self.MRoutputSelector31.nodeTypes = ( ("vtkMRMLScalarVolumeNode"), "" )
+    self.MRoutputSelector31.addAttribute( "vtkMRMLScalarVolumeNode", "LabelMap", 1 ) # this one is a labelmap
+    self.MRoutputSelector31.selectNodeUponCreation = True
+    self.MRoutputSelector31.addEnabled = True
+    self.MRoutputSelector31.removeEnabled = True
+    self.MRoutputSelector31.renameEnabled = False
+    self.MRoutputSelector31.baseName = "mr_vm-label"
+    self.MRoutputSelector31.noneEnabled = False
+    self.MRoutputSelector31.showHidden = False
+    self.MRoutputSelector31.showChildNodeTypes = False
+    self.MRoutputSelector31.setMRMLScene( slicer.mrmlScene )
+    self.MRoutputSelector31.setToolTip( "Select ""Create new volume""." )
+    parametersFormLayout.addRow("Output T2-MRI Veramontanum Segment: ", self.MRoutputSelector31)
+
+    #
+    # output index lesion selector
     #
     self.MRoutputSelector4 = slicer.qMRMLNodeComboBox()
     self.MRoutputSelector4.nodeTypes = ( ("vtkMRMLScalarVolumeNode"), "" )
@@ -398,6 +450,24 @@ class PreProcessWidget(ScriptedLoadableModuleWidget):
     self.MRoutputSelector4.setMRMLScene( slicer.mrmlScene )
     self.MRoutputSelector4.setToolTip( "Select ""Create new volume""." )
     parametersFormLayout.addRow("Output T2-MRI Index Lesion Segmentation: ", self.MRoutputSelector4)
+
+    #
+    # output mr registration label selector
+    #
+    self.MRoutputSelector5 = slicer.qMRMLNodeComboBox()
+    self.MRoutputSelector5.nodeTypes = ( ("vtkMRMLScalarVolumeNode"), "" )
+    self.MRoutputSelector5.addAttribute( "vtkMRMLScalarVolumeNode", "LabelMap", 1 ) # this one is a labelmap
+    self.MRoutputSelector5.selectNodeUponCreation = True
+    self.MRoutputSelector5.addEnabled = True
+    self.MRoutputSelector5.removeEnabled = True
+    self.MRoutputSelector5.renameEnabled = False
+    self.MRoutputSelector5.baseName = "mr_registration-label"
+    self.MRoutputSelector5.noneEnabled = False
+    self.MRoutputSelector5.showHidden = False
+    self.MRoutputSelector5.showChildNodeTypes = False
+    self.MRoutputSelector5.setMRMLScene( slicer.mrmlScene )
+    self.MRoutputSelector5.setToolTip( "Select ""Create new volume""." )
+    parametersFormLayout.addRow("Output T2-MRI Registration Label: ", self.MRoutputSelector5)
 
 
     #
@@ -436,10 +506,10 @@ class PreProcessWidget(ScriptedLoadableModuleWidget):
   def onApplyButton(self):
     logic = PreProcessLogic()
     logic.run(str(int(self.PatientNumberIterationsSpinBox.value)), self.SaveDataCheckBox.checked, 
-              self.USinputSelector1.currentNode(),  self.USinputSelector2.currentNode(),  self.USinputSelector3.currentNode(),  self.USinputSelector4.currentNode(),  self.USinputSelector5.currentNode(), self.USinputSelector6.currentNode(),
-              self.USoutputSelector1.currentNode(), self.USoutputSelector2.currentNode(), 
-              self.MRinputSelector1.currentNode(),  self.MRinputSelector2.currentNode(),  self.MRinputSelector3.currentNode(),  self.MRinputSelector4.currentNode(), 
-                                                    self.MRoutputSelector2.currentNode(), self.MRoutputSelector3.currentNode(), self.MRoutputSelector4.currentNode())
+              self.USinputSelector1.currentNode(),  self.USinputSelector2.currentNode(),  self.USinputSelector3.currentNode(),   self.USinputSelector4.currentNode(),   self.USinputSelector5.currentNode(),  self.USinputSelector51.currentNode(), self.USinputSelector6.currentNode(),
+              self.USoutputSelector1.currentNode(), self.USoutputSelector2.currentNode(), self.USoutputSelector21.currentNode(), self.USoutputSelector3.currentNode(),  self.USoutputSelector4.currentNode(),
+              self.MRinputSelector1.currentNode(),  self.MRinputSelector2.currentNode(),  self.MRinputSelector3.currentNode(),   self.MRinputSelector31currentNode(),   self.MRinputSelector4.currentNode(), 
+                                                    self.MRoutputSelector2.currentNode(), self.MRoutputSelector3.currentNode(),  self.MRoutputSelector31.currentNode(), self.MRoutputSelector4.currentNode(), self.MRoutputSelector5.currentNode())
 
 #
 # PreProcessLogic
@@ -866,20 +936,13 @@ class PreProcessLogic(ScriptedLoadableModuleLogic):
 
 
   def run(self, PatientNumber, SaveDataBool,
-        inputARFI,   inputBmode,  inputCC,  inputUSCaps_Model, inputUSCG_Model, inputUSIndex_Model,
-                                            outputUSCaps_Seg,  outputUSCG_Seg, 
-        inputT2,  inputMRCaps_Seg,  inputMRZones_Seg,  inputMRIndex_Seg, 
-                  outputMRCaps_Seg, outputMRCG_Seg,   outputMRIndex_Seg):
+        inputARFI,   inputBmode,  inputCC,  inputUSCaps_Model, inputUSCG_Model, inputUSVM_Model,  inputUSIndex_Model,
+                                            outputUSCaps_Seg,  outputUSCG_Seg,  outputUSVM_Seg,   outputUSIndex_Seg,  outputUSRegister_Label,
+        inputT2,  inputMRCaps_Seg,  inputMRZones_Seg,  inputMRVM_Seg,  inputMRIndex_Seg, 
+                  outputMRCaps_Seg, outputMRCG_Seg,    outputMRVM_Seg, outputMRIndex_Seg, outputMRRegister_Label):
     """
     Run the actual algorithm
     """
-    # # Check user-defined inputs and outputs
-    # if not self.isValidUltrasoundData(inputARFI, inputBmode, inputUSCaps_Model, outputUSCaps_Seg):
-    #   slicer.util.errorDisplay('Check that Ultrasound Inputs/Outputs are correctly defined.')
-    #   return False
-    # if not self.isValidMRIData(inputT2, inputMRCaps_Seg, outputMRCaps_Seg):
-    #   slicer.util.errorDisplay('Check that MRI Inputs/Outputs are correctly defined.')
-    #   return False
 
     # Print to Slicer CLI
     logging.info('\n\nProcessing started')
@@ -887,10 +950,10 @@ class PreProcessLogic(ScriptedLoadableModuleLogic):
     print('Expected Algorithm Time: 95 seconds') # based on previous trials of the algorithm
     
     # Center all of the volume inputs
-    self.CenterVolume(inputARFI, inputBmode, inputCC, inputT2,  inputMRCaps_Seg,  inputMRZones_Seg,  inputMRIndex_Seg)
+    self.CenterVolume(inputARFI, inputBmode, inputCC, inputT2,  inputMRCaps_Seg,  inputMRZones_Seg,  inputMRVM_Seg, inputMRIndex_Seg)
 
     # # Transform all US inputs using inversion transform
-    self.US_transform(inputARFI, inputBmode, inputCC, inputUSCaps_Model, inputUSCG_Model) 
+    self.US_transform(inputARFI,   inputBmode,  inputCC,  inputUSCaps_Model, inputUSCG_Model, inputUSVM_Model,  inputUSIndex_Model)
 
     # Smooth MR Final Segmentation to turn into single labelmap of capsule
     self.SegmentationSmoothing(inputMRCaps_Seg, inputMRCaps_Seg)
