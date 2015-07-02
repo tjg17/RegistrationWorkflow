@@ -58,7 +58,7 @@ class CreateRegisterLabelWidget(ScriptedLoadableModuleWidget):
     #
     self.inputSelector1 = slicer.qMRMLNodeComboBox()
     self.inputSelector1.nodeTypes = ( ("vtkMRMLScalarVolumeNode"), "" )
-    self.inputSelector1.addAttribute( "vtkMRMLScalarVolumeNode", "LabelMap", 0)
+    self.inputSelector1.addAttribute( "vtkMRMLScalarVolumeNode", "LabelMap", 1)
     self.inputSelector1.selectNodeUponCreation = True
     self.inputSelector1.addEnabled = False
     self.inputSelector1.removeEnabled = False
@@ -74,7 +74,7 @@ class CreateRegisterLabelWidget(ScriptedLoadableModuleWidget):
     #
     self.inputSelector2 = slicer.qMRMLNodeComboBox()
     self.inputSelector2.nodeTypes = ( ("vtkMRMLScalarVolumeNode"), "" )
-    self.inputSelector2.addAttribute( "vtkMRMLScalarVolumeNode", "LabelMap", 0 )
+    self.inputSelector2.addAttribute( "vtkMRMLScalarVolumeNode", "LabelMap", 1 )
     self.inputSelector2.selectNodeUponCreation = True
     self.inputSelector2.addEnabled = False
     self.inputSelector2.removeEnabled = False
@@ -90,7 +90,7 @@ class CreateRegisterLabelWidget(ScriptedLoadableModuleWidget):
     #
     self.inputSelector3 = slicer.qMRMLNodeComboBox()
     self.inputSelector3.nodeTypes = ( ("vtkMRMLScalarVolumeNode"), "" )
-    self.inputSelector3.addAttribute( "vtkMRMLScalarVolumeNode", "LabelMap", 0 )
+    self.inputSelector3.addAttribute( "vtkMRMLScalarVolumeNode", "LabelMap", 1 )
     self.inputSelector3.selectNodeUponCreation = True
     self.inputSelector3.addEnabled = False
     self.inputSelector3.removeEnabled = False
@@ -198,14 +198,14 @@ class CreateRegisterLabelLogic(ScriptedLoadableModuleLogic):
     print('done (%0.2f s)') % float(end_time-start_time)
 
   def ImageLabelCombine(self, inputLabelA, inputLabelB, outputLabel):
-    """ Combines labelmaps with label A overwriting label D if any overlapping area
+    """ Combines labelmaps with label A overwriting label B if any overlapping area
     """
     # Print to Slicer CLI
     print('Combining Labels...'),
     start_time = time.time()
 
     # Run the slicer module in CLI
-    cliParams = {'InputLabelMap_A': inputLabelA.GetID(),'InputLabelMap_B': inputLabelB.GetID(), 'OutputVolume': outputLabel.GetID()} 
+    cliParams = {'InputLabelMap_A': inputLabelA.GetID(),'InputLabelMap_B': inputLabelB.GetID(), 'OutputLabelMap': outputLabel.GetID()} 
     cliNode = slicer.cli.run(slicer.modules.imagelabelcombine, None, cliParams, wait_for_completion=True)
     
     # print to Slicer CLI
@@ -224,13 +224,13 @@ class CreateRegisterLabelLogic(ScriptedLoadableModuleLogic):
     # Combine CG and Capsule Labelmaps
     self.ImageLabelCombine(inputCG, inputCapsule, outputLabel) 
 
-    # Threshold out areas of only CG and areas of CG/capsule overlap to get only PZ
+    # # Threshold out areas of only CG and areas of CG/capsule overlap to get only PZ
     self.ThresholdAbove(outputLabel, 1.5, 0) # PZ has value of 1
 
-    # Threshold VM to 1 before adding
+    # # Threshold VM to 1 before adding
     self.ThresholdAbove(inputVM, 0.5, 1) #(input volume, new label value for nonzero pixels)
 
-    # Add VM to output Label
+    # # Add VM to output Label
     self.ImageLabelCombine(outputLabel, inputVM, outputLabel) # first label overwrites 2nd label
 
     # Print to Slicer CLI
