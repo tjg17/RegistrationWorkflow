@@ -734,7 +734,7 @@ class PreProcessLogic(ScriptedLoadableModuleLogic):
     # Create new output model heirarchy
     outHierarchy = slicer.vtkMRMLModelHierarchyNode()
     outHierarchy.SetScene( slicer.mrmlScene )
-    outHierarchy.SetName( ('MRI Models Smooth '+ smoothingValue) )
+    outHierarchy.SetName( ('MRI Models Smooth '+ str(smoothingValue)) )
     slicer.mrmlScene.AddNode( outHierarchy )
 
     # Set the parameter for the output model heirarchy
@@ -891,6 +891,63 @@ class PreProcessLogic(ScriptedLoadableModuleLogic):
 
     # Return time elapsed
     return float(end_time-start_time)
+  
+  def CreateRegistrationLabel(self, inputCapsule, inputCG, inputVM, registerLabel):
+
+    # Print to Slicer CLI
+    print('Creating Registration Label...'),
+    start_time = time.time()
+
+    # Change Label Values for processing
+    self.ThresholdScalarVolume(inputCapsule,  1) 
+    self.ThresholdScalarVolume(inputCG,       2)
+    self.ThresholdScalarVolume(inputVM,       3)
+
+    # Combine CG and Capsule Labelmaps
+    self.ImageLabelCombine(inputCG, inputCapsule, registerLabel) # first label overwrites second
+
+    # # Threshold out areas of only CG and areas of CG/capsule overlap to get only PZ
+    self.ThresholdAbove(registerLabel, 1.5, 0) # PZ has value of 1
+
+    # # Threshold VM to 1 before adding
+    self.ThresholdAbove(inputVM, 0.5, 1) #(input volume, new label value for nonzero pixels)
+
+    # # Add VM to output Label
+    self.ImageLabelCombine(registerLabel, inputVM, registerLabel) # first label overwrites 2nd label
+
+    # print to Slicer CLI
+    end_time = time.time()
+    print('done (%0.2f s)') % float(end_time-start_time)
+
+  def ImageLabelCombine(self, inputLabelA, inputLabelB, outputLabel):
+    """ Combines labelmaps with label A overwriting label B if any overlapping area
+    """
+    # Print to Slicer CLI
+    print('Combining Labels...'),
+    start_time = time.time()
+
+    # Run the slicer module in CLI
+    cliParams = {'InputLabelMap_A': inputLabelA.GetID(),'InputLabelMap_B': inputLabelB.GetID(), 'OutputLabelMap': outputLabel.GetID()} 
+    cliNode = slicer.cli.run(slicer.modules.imagelabelcombine, None, cliParams, wait_for_completion=True)
+    
+    # print to Slicer CLI
+    end_time = time.time()
+    print('done (%0.2f s)') % float(end_time-start_time)
+
+  def ThresholdAbove(self, inputVolume, thresholdVal, newLabelVal):
+    """ Thresholds nonzero values on an input labelmap volume to the newLabelVal number while leaving all 0 values untouched
+    """
+    # Print to Slicer CLI
+    print('Thresholding Label Value...'),
+    start_time = time.time()
+
+    # Run the slicer module in CLI
+    cliParams = {'InputVolume': inputVolume.GetID(), 'OutputVolume': inputVolume.GetID(), 'ThresholdType': 'Above', 'ThresholdValue': thresholdVal, 'OutsideValue': newLabelVal} 
+    cliNode = slicer.cli.run(slicer.modules.thresholdscalarvolume, None, cliParams, wait_for_completion=True)
+    
+    # print to Slicer CLI
+    end_time = time.time()
+    print('done (%0.2f s)') % float(end_time-start_time)
 
   def SaveMRRegistrationInputs(self, PatientNumber, inputT2, outputMRCaps_Seg, outputMRCG_Seg, outputMRIndex_Seg):
     """ Saves MRI volumes and labelmaps after preprocessing prior to registration
@@ -967,11 +1024,9 @@ class PreProcessLogic(ScriptedLoadableModuleLogic):
     # # Transform MRI inputs to match Ultrasound so that MR capsule fits in US volume prior to registration
     self.MR_translate(intermediateMRCaps_Model, inputUSCaps_Model, inputT2,  inputMRCaps_Seg,  inputMRZones_Seg,  inputMRVM_Seg,  inputMRIndex_Seg) # add more MRI inputs to the function
 
-    # Make a models of MRI index lesion and veramontanum
+    # Make models of MRI index lesion and veramontanum
     inputMRIndex_Model = self.MRModelMaker(inputMRIndex_Seg, 20) # smooth 20
     inputMRVM_Model    = self.MRModelMaker(inputMRVM_Seg,    30) # smooth 30
-
-    # Make a model of veramontanum in MRI after changing label value to 3
 
     # Convert US Capsule and CG models to labelmap on T2 volume (use T2 for faster conversion since larger image spacing)
     self.ModelToLabelMap(inputT2, inputUSCaps_Model, outputUSCaps_Seg)
@@ -988,36 +1043,45 @@ class PreProcessLogic(ScriptedLoadableModuleLogic):
     # Resample all segmentations and volumes to match ARFI spacing, size, orientation, origin
     self.ResampleVolumefromReference(inputARFI, outputUSCaps_Seg, outputUSCG_Seg, outputMRCaps_Seg, outputMRCG_Seg, inputT2)
 
-    # Model to labelmap for tumor models for ARFI and MRI (** LONG STEP **)
-    self.ModelToLabelMap(inputT2,   inputMRIndex_Model, outputMRIndex_Seg)
-    self.ModelToLabelMap(inputARFI, inputUSIndex_Model, outputUSIndex_Seg)
-
-    # Model to labelmap for veramontanum models (** LONG STEP **)
-    self.ModelToLabelMap(inputARFI, inputUSVM_Model, outputUSVM_Seg)
-
     # Additional smoothing of output labelmaps in label map smoothing module using sigma = 3 (SlicerProstate manuscript)
     self.LabelMapSmoothing(outputUSCaps_Seg, 1) #(input/output volume, sigma for gaussian smoothing, [label to smooth-optional])
     self.LabelMapSmoothing(outputUSCG_Seg,   1)
     self.LabelMapSmoothing(outputMRCaps_Seg, 1)
     self.LabelMapSmoothing(outputMRCG_Seg,   1)
 
-    # Threshold Scalar volume to change label map value for output labels
-    self.ThresholdScalarVolume(outputUSCaps_Seg,  1) #(input volume, new label value for nonzero pixels)
-    self.ThresholdScalarVolume(outputUSCG_Seg,    2) # 2 is CG label
-    self.ThresholdScalarVolume(outputMRCaps_Seg,  1) # 1 is Capsule label
-    self.ThresholdScalarVolume(outputMRCG_Seg,    2)
-    self.ThresholdScalarVolume(outputMRIndex_Seg, 3) # 3 is index tumor label
+    # Model to labelmap for veramontanum models (** LONG STEP **)
+    self.ModelToLabelMap(inputARFI, inputUSVM_Model, outputUSVM_Seg)
+    self.ModelToLabelMap(inputT2,   inputMRVM_Model, outputMRVM_Seg)
+
+    # Model to labelmap for tumor models for ARFI and MRI (** LONG STEP **)
+    self.ModelToLabelMap(inputARFI, inputUSIndex_Model, outputUSIndex_Seg)
+    self.ModelToLabelMap(inputT2,   inputMRIndex_Model, outputMRIndex_Seg)
+    
+    # Create output registration labelmap for MR and US combining Capsule, CG, and VM labelmaps
+    self.CreateRegistrationLabel(outputUSCaps_Seg, outputUSCG_Seg, outputUSVM_Seg, outputUSRegister_Label) # for ultrasound
+    self.CreateRegistrationLabel(outputUSCaps_Seg, outputUSCG_Seg, outputUSVM_Seg, outputUSRegister_Label) # for ultrasound
+
+    ### Change label map values for output labels before saving
+    # For Ultrasound
+    self.ThresholdScalarVolume(outputUSCaps_Seg,  1)  #(input volume, new label value for nonzero pixels) # 1 for Capsule
+    self.ThresholdScalarVolume(outputUSCG_Seg,    2)  # 2 is CG label
+    self.ThresholdScalarVolume(outputUSVM_Seg,    3)  # 3 for VM
+    self.ThresholdScalarVolume(outputUSIndex_Seg, 34) # 34 for index tumor
+    self.ThresholdScalarVolume(outputUSRegister_Label, 10) # 10 for registration label
     self.ThresholdScalarVolume(inputCC,         255) # 255 for CC Mask label
 
+    # For MRI
+    self.ThresholdScalarVolume(outputMRCaps_Seg,  1)  # 1 for MRI Capsule
+    self.ThresholdScalarVolume(outputMRCG_Seg,    2)  # 2 is CG label
+    self.ThresholdScalarVolume(outputMRVM_Seg,    3)  # 3 for VM
+    self.ThresholdScalarVolume(outputMRIndex_Seg, 34) # 34 for index tumor
+    self.ThresholdScalarVolume(outputMRRegister_Label, 10) # 10 for registration label
 
+    # Remove unnecessary/intermediate Ultrasound nodes
+    self.RemoveNode(inputUSCaps_Model, inputUSCG_Model, inputUSVM_Model, inputUSIndex_Model)
 
-
-
-    # Remove Unused Intermediate Nodes before display
-    self.RemoveNode(inputUSCaps_Model, inputUSCG_Model, indexlesion_model)
-
-    # Remove input nodes that are not to be saved
-    self.RemoveNode(inputMRCaps_Seg, inputMRZones_Seg,  inputMRIndex_Seg)
+    # Remove unnecessary/intermediate MRI nodes
+    self.RemoveNode(inputMRCaps_Seg, inputMRZones_Seg,  inputMRVM_Seg,  inputMRIndex_Seg, inputMRVM_Model, inputMRIndex_Model)
 
     # Save data if user specifies and figure out time required to save data
     if SaveDataBool:
