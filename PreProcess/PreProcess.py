@@ -280,7 +280,7 @@ class PreProcessWidget(ScriptedLoadableModuleWidget):
     self.USoutputSelector4.addEnabled = True
     self.USoutputSelector4.removeEnabled = True
     self.USoutputSelector4.renameEnabled = False
-    self.USoutputSelector4.baseName = "us_register-label"
+    self.USoutputSelector4.baseName = "us_registration-label"
     self.USoutputSelector4.noneEnabled = False
     self.USoutputSelector4.showHidden = False
     self.USoutputSelector4.showChildNodeTypes = False
@@ -508,7 +508,7 @@ class PreProcessWidget(ScriptedLoadableModuleWidget):
     logic.run(str(int(self.PatientNumberIterationsSpinBox.value)), self.SaveDataCheckBox.checked, 
               self.USinputSelector1.currentNode(),  self.USinputSelector2.currentNode(),  self.USinputSelector3.currentNode(),   self.USinputSelector4.currentNode(),   self.USinputSelector5.currentNode(),  self.USinputSelector51.currentNode(), self.USinputSelector6.currentNode(),
               self.USoutputSelector1.currentNode(), self.USoutputSelector2.currentNode(), self.USoutputSelector21.currentNode(), self.USoutputSelector3.currentNode(),  self.USoutputSelector4.currentNode(),
-              self.MRinputSelector1.currentNode(),  self.MRinputSelector2.currentNode(),  self.MRinputSelector3.currentNode(),   self.MRinputSelector31currentNode(),   self.MRinputSelector4.currentNode(), 
+              self.MRinputSelector1.currentNode(),  self.MRinputSelector2.currentNode(),  self.MRinputSelector3.currentNode(),   self.MRinputSelector31.currentNode(),   self.MRinputSelector4.currentNode(), 
                                                     self.MRoutputSelector2.currentNode(), self.MRoutputSelector3.currentNode(),  self.MRoutputSelector31.currentNode(), self.MRoutputSelector4.currentNode(), self.MRoutputSelector5.currentNode())
 
 #
@@ -866,32 +866,7 @@ class PreProcessLogic(ScriptedLoadableModuleLogic):
     # print to Slicer CLI
     end_time = time.time()
     print('done (%0.2f s)') % float(end_time-start_time)
-
-  def SaveUSRegistrationInputs(self, PatientNumber, inputARFI,  inputBmode,  inputCC, outputUSCaps_Seg,  outputUSCG_Seg):
-    """ Saves Ultrasound volumes and labelmaps after preprocessing prior to registration
-    """
-    # Print to Slicer CLI
-    print('Saving Ultrasound Results...'),
-    start_time = time.time()
-
-    # Define filepath    
-    root = '/luscinia/ProstateStudy/invivo/Patient'
-    inputspath = '/Registration/RegistrationInputs/'
-
-    # Save Ultrasound Files
-    slicer.util.saveNode(inputARFI,        (root+PatientNumber+inputspath+'us_ARFI.nii'))
-    slicer.util.saveNode(inputBmode,       (root+PatientNumber+inputspath+'us_Bmode.nii'))
-    slicer.util.saveNode(inputCC,          (root+PatientNumber+inputspath+'us_ARFICCMask.nrrd'))
-    slicer.util.saveNode(outputUSCaps_Seg, (root+PatientNumber+inputspath+'us_cap-label.nrrd'))
-    slicer.util.saveNode(outputUSCG_Seg,   (root+PatientNumber+inputspath+'us_cg-label.nrrd'))
-
-    # print to Slicer CLI
-    end_time = time.time()
-    print('done (%0.2f s)') % float(end_time-start_time)
-
-    # Return time elapsed
-    return float(end_time-start_time)
-  
+ 
   def CreateRegistrationLabel(self, inputCapsule, inputCG, inputVM, registerLabel):
 
     # Print to Slicer CLI
@@ -949,7 +924,35 @@ class PreProcessLogic(ScriptedLoadableModuleLogic):
     end_time = time.time()
     print('done (%0.2f s)') % float(end_time-start_time)
 
-  def SaveMRRegistrationInputs(self, PatientNumber, inputT2, outputMRCaps_Seg, outputMRCG_Seg, outputMRIndex_Seg):
+  def SaveUSRegistrationInputs(self, PatientNumber, inputARFI,  inputBmode,  inputCC, outputUSCaps_Seg,  outputUSCG_Seg, outputUSVM_Seg, outputUSIndex_Seg, outputUSRegister_Label):
+    """ Saves Ultrasound volumes and labelmaps after preprocessing prior to registration
+    """
+    # Print to Slicer CLI
+    print('Saving Ultrasound Results...'),
+    start_time = time.time()
+
+    # Define filepath    
+    root = '/luscinia/ProstateStudy/invivo/Patient'
+    inputspath = '/Registration/RegistrationInputs/'
+
+    # Save Ultrasound Files
+    slicer.util.saveNode(inputARFI,              (root+PatientNumber+inputspath+'us_ARFI.nii'))
+    slicer.util.saveNode(inputBmode,             (root+PatientNumber+inputspath+'us_Bmode.nii'))
+    slicer.util.saveNode(inputCC,                (root+PatientNumber+inputspath+'us_ARFICCMask.nrrd'))
+    slicer.util.saveNode(outputUSCaps_Seg,       (root+PatientNumber+inputspath+'us_cap-label.nrrd'))
+    slicer.util.saveNode(outputUSCG_Seg,         (root+PatientNumber+inputspath+'us_cg-label.nrrd'))
+    slicer.util.saveNode(outputUSVM_Seg,         (root+PatientNumber+inputspath+'us_vm-label.nrrd'))
+    slicer.util.saveNode(outputUSIndex_Seg,      (root+PatientNumber+inputspath+'us_indexlesion-label.nrrd'))
+    slicer.util.saveNode(outputUSRegister_Label, (root+PatientNumber+inputspath+'us_registration-label.nrrd'))
+
+    # print to Slicer CLI
+    end_time = time.time()
+    print('done (%0.2f s)') % float(end_time-start_time)
+
+    # Return time elapsed
+    return float(end_time-start_time)
+
+  def SaveMRRegistrationInputs(self, PatientNumber, inputT2, outputMRCaps_Seg, outputMRCG_Seg, outputMRVM_Seg, outputMRIndex_Seg, outputMRRegister_Label):
     """ Saves MRI volumes and labelmaps after preprocessing prior to registration
     """
     # Print to Slicer CLI
@@ -961,10 +964,13 @@ class PreProcessLogic(ScriptedLoadableModuleLogic):
     inputspath = '/Registration/RegistrationInputs/'
 
     # Save MRI Files
-    slicer.util.saveNode(inputT2,            (root+PatientNumber+inputspath+'mr_T2_AXIAL.nii'))
-    slicer.util.saveNode(outputMRCaps_Seg,   (root+PatientNumber+inputspath+'mr_cap-label.nrrd'))
-    slicer.util.saveNode(outputMRCG_Seg,     (root+PatientNumber+inputspath+'mr_cg-label.nrrd'))
-    slicer.util.saveNode(outputMRIndex_Seg,  (root+PatientNumber+inputspath+'mr_indexlesion-label.nrrd'))
+    slicer.util.saveNode(inputT2,                (root+PatientNumber+inputspath+'mr_T2_AXIAL.nii'))
+    slicer.util.saveNode(outputMRCaps_Seg,       (root+PatientNumber+inputspath+'mr_cap-label.nrrd'))
+    slicer.util.saveNode(outputMRCG_Seg,         (root+PatientNumber+inputspath+'mr_cg-label.nrrd'))
+    slicer.util.saveNode(outputMRVM_Seg,         (root+PatientNumber+inputspath+'mr_vm-label.nrrd'))
+    slicer.util.saveNode(outputMRIndex_Seg,      (root+PatientNumber+inputspath+'mr_indexlesion-label.nrrd'))
+    slicer.util.saveNode(outputMRRegister_Label, (root+PatientNumber+inputspath+'mr_registration-label.nrrd'))
+
 
     # print to Slicer CLI
     end_time = time.time()
@@ -1007,7 +1013,7 @@ class PreProcessLogic(ScriptedLoadableModuleLogic):
     # Print to Slicer CLI
     logging.info('\n\nProcessing started')
     start_time_overall = time.time() # start timer
-    print('Expected Algorithm Time: 95 seconds') # based on previous trials of the algorithm
+    print('Expected Algorithm Time: 200 seconds') # based on previous trials of the algorithm
     
     # Center all of the volume inputs
     self.CenterVolume(inputARFI, inputBmode, inputCC, inputT2,  inputMRCaps_Seg,  inputMRZones_Seg,  inputMRVM_Seg, inputMRIndex_Seg)
@@ -1085,8 +1091,8 @@ class PreProcessLogic(ScriptedLoadableModuleLogic):
 
     # Save data if user specifies and figure out time required to save data
     if SaveDataBool:
-        US_savetime = self.SaveUSRegistrationInputs(PatientNumber, inputARFI,   inputBmode,  inputCC, outputUSCaps_Seg,  outputUSCG_Seg)
-        MR_savetime = self.SaveMRRegistrationInputs(PatientNumber, inputT2, outputMRCaps_Seg, outputMRCG_Seg, outputMRIndex_Seg)
+        US_savetime = self.SaveUSRegistrationInputs(PatientNumber, inputARFI,   inputBmode,  inputCC, outputUSCaps_Seg, outputUSCG_Seg, outputUSVM_Seg, outputUSIndex_Seg, outputUSRegister_Label)
+        MR_savetime = self.SaveMRRegistrationInputs(PatientNumber, inputT2,                           outputMRCaps_Seg, outputMRCG_Seg, outputMRVM_Seg, outputMRIndex_Seg, outputMRRegister_Label)
         scene_savetime = self.saveScene(PatientNumber)
         total_savetime = US_savetime + MR_savetime + scene_savetime
     else:
