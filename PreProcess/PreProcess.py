@@ -694,12 +694,15 @@ class PreProcessLogic(ScriptedLoadableModuleLogic):
 
     return outputMRModel    
 
-  def MRTumorModelMaker(self, inputMRlabel):
+  def MRModelMaker(self, inputMRlabel, smoothingValue):
     """ Converts MRI tumor labelmap segemntation into slicer VTK model node
     """
     # Print to Slicer CLI
-    print('Creating MR Model...'),
+    print('Creating MRI Model...'),
     start_time = time.time()
+
+    # Change input label value
+    self.ThresholdScalarVolume(inputMRlabel,  34)
 
     # Set model parameters
     parameters = {} 
@@ -713,25 +716,25 @@ class PreProcessLogic(ScriptedLoadableModuleLogic):
     parameters["StartLabel"] = -1
     parameters["EndLabel"] = -1
     parameters["Decimate"] = 0.1
-    parameters["Smooth"] = 20
-    parameters["Name"] = 'lesion'
+    parameters["Smooth"] = int(smoothingValue) # make sure it is an integer
+    parameters["Name"] = 'model'
 
-    # Need to create new model heirarchy node for models to enter the scene
-    numNodes = slicer.mrmlScene.GetNumberOfNodesByClass( "vtkMRMLModelHierarchyNode" )
-    if numNodes > 0:
-      # user wants to delete any existing models, so take down hierarchy and
-      # delete the model nodes
-      rr = range(numNodes)
-      rr.reverse()
-      for n in rr:
-        node = slicer.mrmlScene.GetNthNodeByClass( n, "vtkMRMLModelHierarchyNode" )
-        slicer.mrmlScene.RemoveNode( node.GetModelNode() )
-        slicer.mrmlScene.RemoveNode( node )
+    # # Need to create new model heirarchy node for models to enter the scene
+    # numNodes = slicer.mrmlScene.GetNumberOfNodesByClass( "vtkMRMLModelHierarchyNode" )
+    # if numNodes > 0:
+    #   # user wants to delete any existing models, so take down hierarchy and
+    #   # delete the model nodes
+    #   rr = range(numNodes)
+    #   rr.reverse()
+    #   for n in rr:
+    #     node = slicer.mrmlScene.GetNthNodeByClass( n, "vtkMRMLModelHierarchyNode" )
+    #     slicer.mrmlScene.RemoveNode( node.GetModelNode() )
+    #     slicer.mrmlScene.RemoveNode( node )
 
     # Create new output model heirarchy
     outHierarchy = slicer.vtkMRMLModelHierarchyNode()
     outHierarchy.SetScene( slicer.mrmlScene )
-    outHierarchy.SetName( "Lesion Models" )
+    outHierarchy.SetName( ('MRI Models Smooth '+ smoothingValue) )
     slicer.mrmlScene.AddNode( outHierarchy )
 
     # Set the parameter for the output model heirarchy
@@ -741,7 +744,7 @@ class PreProcessLogic(ScriptedLoadableModuleLogic):
     slicer.cli.run(slicer.modules.modelmaker, None, parameters, wait_for_completion=True)
 
     # Define the output model as the created model in the scene
-    outputMRModel = slicer.util.getNode('lesion_34_34') # index lesion label has label value of 34 
+    outputMRModel = slicer.util.getNode('model_34_34') # created model has label value of 34 
 
     # print to Slicer CLI
     end_time = time.time()
@@ -962,13 +965,15 @@ class PreProcessLogic(ScriptedLoadableModuleLogic):
     intermediateMRCaps_Model = self.MRCapModelMaker(inputMRCaps_Seg)
 
     # # Transform MRI inputs to match Ultrasound so that MR capsule fits in US volume prior to registration
-    self.MR_translate(intermediateMRCaps_Model, inputUSCaps_Model, inputT2,  inputMRCaps_Seg,  inputMRZones_Seg,  inputMRIndex_Seg) # add more MRI inputs to the function
+    self.MR_translate(intermediateMRCaps_Model, inputUSCaps_Model, inputT2,  inputMRCaps_Seg,  inputMRZones_Seg,  inputMRVM_Seg,  inputMRIndex_Seg) # add more MRI inputs to the function
 
-    # Make a model of index lesion tumor after changing label value to 34
-    self.ThresholdScalarVolume(inputMRIndex_Seg,  34)
-    indexlesion_model = self.MRTumorModelMaker(inputMRIndex_Seg)
+    # Make a models of MRI index lesion and veramontanum
+    inputMRIndex_Model = self.MRModelMaker(inputMRIndex_Seg, 20) # smooth 20
+    inputMRVM_Model    = self.MRModelMaker(inputMRVM_Seg,    30) # smooth 30
 
-    # Convert US Capsule and CG models to labelmap on T2 volume (use T2 for faster conversion)
+    # Make a model of veramontanum in MRI after changing label value to 3
+
+    # Convert US Capsule and CG models to labelmap on T2 volume (use T2 for faster conversion since larger image spacing)
     self.ModelToLabelMap(inputT2, inputUSCaps_Model, outputUSCaps_Seg)
     self.ModelToLabelMap(inputT2, inputUSCG_Model, outputUSCG_Seg)
 
@@ -981,10 +986,14 @@ class PreProcessLogic(ScriptedLoadableModuleLogic):
     self.SegmentationSmoothing(inputMRZones_Seg, outputMRCG_Seg, 9) # label value 9
 
     # Resample all segmentations and volumes to match ARFI spacing, size, orientation, origin
-    self.ResampleVolumefromReference(inputARFI, outputUSCaps_Seg, outputUSCG_Seg, outputMRCaps_Seg, outputMRCG_Seg, outputMRIndex_Seg, inputT2)
+    self.ResampleVolumefromReference(inputARFI, outputUSCaps_Seg, outputUSCG_Seg, outputMRCaps_Seg, outputMRCG_Seg, inputT2)
 
-    # Model to labelmap for tumor model onto resampled MRI (** LONGEST STEP **)
-    self.ModelToLabelMap(inputT2, indexlesion_model, outputMRIndex_Seg)
+    # Model to labelmap for tumor models for ARFI and MRI (** LONG STEP **)
+    self.ModelToLabelMap(inputT2,   inputMRIndex_Model, outputMRIndex_Seg)
+    self.ModelToLabelMap(inputARFI, inputUSIndex_Model, outputUSIndex_Seg)
+
+    # Model to labelmap for veramontanum models (** LONG STEP **)
+    self.ModelToLabelMap(inputARFI, inputUSVM_Model, outputUSVM_Seg)
 
     # Additional smoothing of output labelmaps in label map smoothing module using sigma = 3 (SlicerProstate manuscript)
     self.LabelMapSmoothing(outputUSCaps_Seg, 1) #(input/output volume, sigma for gaussian smoothing, [label to smooth-optional])
@@ -999,6 +1008,10 @@ class PreProcessLogic(ScriptedLoadableModuleLogic):
     self.ThresholdScalarVolume(outputMRCG_Seg,    2)
     self.ThresholdScalarVolume(outputMRIndex_Seg, 3) # 3 is index tumor label
     self.ThresholdScalarVolume(inputCC,         255) # 255 for CC Mask label
+
+
+
+
 
     # Remove Unused Intermediate Nodes before display
     self.RemoveNode(inputUSCaps_Model, inputUSCG_Model, indexlesion_model)
