@@ -1013,7 +1013,7 @@ class PreProcessLogic(ScriptedLoadableModuleLogic):
     # Print to Slicer CLI
     logging.info('\n\nProcessing started')
     start_time_overall = time.time() # start timer
-    print('Expected Algorithm Time: 200 seconds') # based on previous trials of the algorithm
+    print('Expected Algorithm Time: 215 seconds') # based on previous trials of the algorithm
     
     # Center all of the volume inputs
     self.CenterVolume(inputARFI, inputBmode, inputCC, inputT2,  inputMRCaps_Seg,  inputMRZones_Seg,  inputMRVM_Seg, inputMRIndex_Seg)
@@ -1065,7 +1065,7 @@ class PreProcessLogic(ScriptedLoadableModuleLogic):
     
     # Create output registration labelmap for MR and US combining Capsule, CG, and VM labelmaps
     self.CreateRegistrationLabel(outputUSCaps_Seg, outputUSCG_Seg, outputUSVM_Seg, outputUSRegister_Label) # for ultrasound
-    self.CreateRegistrationLabel(outputUSCaps_Seg, outputUSCG_Seg, outputUSVM_Seg, outputUSRegister_Label) # for ultrasound
+    self.CreateRegistrationLabel(outputMRCaps_Seg, outputMRCG_Seg, outputMRVM_Seg, outputMRRegister_Label) # for ultrasound
 
     ### Change label map values for output labels before saving
     # For Ultrasound
