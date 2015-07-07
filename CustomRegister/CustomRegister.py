@@ -371,24 +371,24 @@ class CustomRegisterLogic(ScriptedLoadableModuleLogic):
     parameterNode.SetAttribute('MovingLabelSmoothedID',movingLabelSmoothed.GetID())
     print('Moving label processing done')
 
-    # # run affine registration
-    # registrationParameters = {'fixedVolume':fixedLabelDistanceMap.GetID(), 'movingVolume':movingLabelDistanceMap.GetID(),'useRigid':True,'useAffine':True,'numberOfSamples':'10000','costMetric':'MSE','outputTransform':affineTransformNode.GetID()}
-    # slicer.cli.run(slicer.modules.brainsfit, None, registrationParameters, wait_for_completion=True)
-    # parameterNode.SetAttribute('AffineTransformNodeID',affineTransformNode.GetID())
-    # print('affineRegistrationCompleted!')
+    # run affine registration
+    registrationParameters = {'fixedVolume':fixedLabelDistanceMap.GetID(), 'movingVolume':movingLabelDistanceMap.GetID(),'useRigid':True,'useAffine':True,'numberOfSamples':'10000','costMetric':'MSE','outputTransform':affineTransformNode.GetID()}
+    slicer.cli.run(slicer.modules.brainsfit, None, registrationParameters, wait_for_completion=True)
+    parameterNode.SetAttribute('AffineTransformNodeID',affineTransformNode.GetID())
+    print('affineRegistrationCompleted!')
 
-    # # run bspline registration
-    # registrationParameters = {'fixedVolume':fixedLabelDistanceMap.GetID(), 'movingVolume':movingLabelDistanceMap.GetID(),'useBSpline':True,'splineGridSize':'3,3,3','numberOfSamples':'10000','costMetric':'MSE','bsplineTransform':bsplineTransformNode.GetID(),'initialTransform':affineTransformNode.GetID()}
-    # slicer.cli.run(slicer.modules.brainsfit, None, registrationParameters, wait_for_completion=True)
-    # parameterNode.SetAttribute('BSplineTransformNodeID',bsplineTransformNode.GetID())
-    # print('bsplineRegistrationCompleted!')
+    # run bspline registration
+    registrationParameters = {'fixedVolume':fixedLabelDistanceMap.GetID(), 'movingVolume':movingLabelDistanceMap.GetID(),'useBSpline':True,'splineGridSize':'3,3,3','numberOfSamples':'10000','costMetric':'MSE','bsplineTransform':bsplineTransformNode.GetID(),'initialTransform':affineTransformNode.GetID()}
+    slicer.cli.run(slicer.modules.brainsfit, None, registrationParameters, wait_for_completion=True)
+    parameterNode.SetAttribute('BSplineTransformNodeID',bsplineTransformNode.GetID())
+    print('bsplineRegistrationCompleted!')
 
-    # Compute Similarity Metric before and after transforming moving similarity node
-    SimilarityMetric = self.ComputeSimilarityMetric(parameterNode) # compute similarity metric b/w fixed and moving similarity
-    print SimilarityMetric
-    #self.transformNodeBspline(parameterNode) 
-    #self.processTransformedNode(parameterNode) 
-    #self.ComputeSimilarityMetric(parameterNode) # compute similarity metric b/w fixed and moving similarity
+    # # Compute Similarity Metric before and after transforming moving similarity node
+    # SimilarityMetric = self.ComputeSimilarityMetric(parameterNode) # compute similarity metric b/w fixed and moving similarity
+    # print SimilarityMetric
+    # #self.transformNodeBspline(parameterNode) 
+    # #self.processTransformedNode(parameterNode) 
+    # #self.ComputeSimilarityMetric(parameterNode) # compute similarity metric b/w fixed and moving similarity
 
 
     # Print results to Slicer CLI
