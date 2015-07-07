@@ -371,22 +371,24 @@ class CustomRegisterLogic(ScriptedLoadableModuleLogic):
     parameterNode.SetAttribute('MovingLabelSmoothedID',movingLabelSmoothed.GetID())
     print('Moving label processing done')
 
-    # run affine registration
-    registrationParameters = {'fixedVolume':fixedLabelDistanceMap.GetID(), 'movingVolume':movingLabelDistanceMap.GetID(),'useRigid':True,'useAffine':True,'numberOfSamples':'10000','costMetric':'MSE','outputTransform':affineTransformNode.GetID()}
-    slicer.cli.run(slicer.modules.brainsfit, None, registrationParameters, wait_for_completion=True)
-    parameterNode.SetAttribute('AffineTransformNodeID',affineTransformNode.GetID())
-    print('affineRegistrationCompleted!')
+    # # run affine registration
+    # registrationParameters = {'fixedVolume':fixedLabelDistanceMap.GetID(), 'movingVolume':movingLabelDistanceMap.GetID(),'useRigid':True,'useAffine':True,'numberOfSamples':'10000','costMetric':'MSE','outputTransform':affineTransformNode.GetID()}
+    # slicer.cli.run(slicer.modules.brainsfit, None, registrationParameters, wait_for_completion=True)
+    # parameterNode.SetAttribute('AffineTransformNodeID',affineTransformNode.GetID())
+    # print('affineRegistrationCompleted!')
 
-    # run bspline registration
-    registrationParameters = {'fixedVolume':fixedLabelDistanceMap.GetID(), 'movingVolume':movingLabelDistanceMap.GetID(),'useBSpline':True,'splineGridSize':'3,3,3','numberOfSamples':'10000','costMetric':'MSE','bsplineTransform':bsplineTransformNode.GetID(),'initialTransform':affineTransformNode.GetID()}
-    slicer.cli.run(slicer.modules.brainsfit, None, registrationParameters, wait_for_completion=True)
-    parameterNode.SetAttribute('BSplineTransformNodeID',bsplineTransformNode.GetID())
-    print('bsplineRegistrationCompleted!')
+    # # run bspline registration
+    # registrationParameters = {'fixedVolume':fixedLabelDistanceMap.GetID(), 'movingVolume':movingLabelDistanceMap.GetID(),'useBSpline':True,'splineGridSize':'3,3,3','numberOfSamples':'10000','costMetric':'MSE','bsplineTransform':bsplineTransformNode.GetID(),'initialTransform':affineTransformNode.GetID()}
+    # slicer.cli.run(slicer.modules.brainsfit, None, registrationParameters, wait_for_completion=True)
+    # parameterNode.SetAttribute('BSplineTransformNodeID',bsplineTransformNode.GetID())
+    # print('bsplineRegistrationCompleted!')
 
-    # Compute Similarity Metric after transforming moving similarity node
-    self.transformNodeBspline(parameterNode) 
-    self.processTransformedNode(parameterNode) 
-    self.ComputeSimilarityMetric(parameterNode) # compute similarity metric b/w fixed and moving similarity
+    # Compute Similarity Metric before and after transforming moving similarity node
+    SimilarityMetric = self.ComputeSimilarityMetric(parameterNode) # compute similarity metric b/w fixed and moving similarity
+    print SimilarityMetric
+    #self.transformNodeBspline(parameterNode) 
+    #self.processTransformedNode(parameterNode) 
+    #self.ComputeSimilarityMetric(parameterNode) # compute similarity metric b/w fixed and moving similarity
 
 
     # Print results to Slicer CLI
@@ -409,6 +411,21 @@ class CustomRegisterLogic(ScriptedLoadableModuleLogic):
     movingSimilarityLabel  = slicer.util.getNode(parameterNode.GetAttribute('MovingSimilarityLabelNodeID')) # Get Nodes from IDs
     self.ThresholdScalarVolume(movingSimilarityLabel, 20) # set to label value of 20
     self.LabelMapSmoothing(movingSimilarityLabel, 0.3)
+
+  def ComputeSimilarityMetric(self, parameterNode):
+    # Computes the similarity metric for the labels chosen by thew widget
+    import SimpleITK as sitk
+    import sitkUtils
+
+    fixedSimilarityLabel   = slicer.util.getNode(parameterNode.GetAttribute('FixedSimilarityLabelNodeID')) # Get Nodes from IDs
+    movingSimilarityLabel  = slicer.util.getNode(parameterNode.GetAttribute('MovingSimilarityLabelNodeID')) # Get Nodes from IDs
+
+    fixed_img  = sitk.ReadImage(sitkUtils.GetSlicerITKReadWriteAddress( fixedSimilarityLabel.GetName()))
+    moving_img = sitk.ReadImage(sitkUtils.GetSlicerITKReadWriteAddress(movingSimilarityLabel.GetName()))
+
+    similarity_filter = sitk.SimilarityIndexImageFilter()
+    similarity_filter.Execute(fixed_img, moving_img)
+    return similarity_filter.GetSimilarityIndex()
 
   def LabelMapSmoothing(self, inputVolume, Sigma, *labelNumber):
     """ Smooths an input volume labelmap using value of sigma provided (number from 0-5). Optionally smooths only selected labels if more arguments passed
