@@ -256,9 +256,9 @@ class CustomRegisterWidget(ScriptedLoadableModuleWidget):
     
 
     # configure the GUI
-    logic.showResults(self.parameterNode)
-    self.noRegistrationRadio.checked = 1
-    self.onVisualizationModeClicked(1)
+    #logic.showResults(self.parameterNode)
+    #self.noRegistrationRadio.checked = 1
+    #self.onVisualizationModeClicked(1)
 
     return
 
@@ -346,6 +346,8 @@ class CustomRegisterLogic(ScriptedLoadableModuleLogic):
 
     fixedSimilarityLabelNodeID      = parameterNode.GetAttribute('FixedSimilarityLabelNodeID')
     movingSimilarityLabelNodeID     = parameterNode.GetAttribute('MovingSimilarityLabelNodeID')
+    fixedSimilarityLabelNode        = slicer.util.getNode( fixedSimilarityLabelNodeID)
+    movingSimilarityLabelNode       = slicer.util.getNode(movingSimilarityLabelNodeID)
     
     affineTransformNode   = slicer.mrmlScene.GetNodeByID(parameterNode.GetAttribute('AffineTransformNodeID'))
     bsplineTransformNode  = slicer.mrmlScene.GetNodeByID(parameterNode.GetAttribute('BSplineTransformNodeID'))
@@ -377,19 +379,48 @@ class CustomRegisterLogic(ScriptedLoadableModuleLogic):
     parameterNode.SetAttribute('AffineTransformNodeID',affineTransformNode.GetID())
     print('affineRegistrationCompleted!')
 
-    # run bspline registration
-    registrationParameters = {'fixedVolume':fixedLabelDistanceMap.GetID(), 'movingVolume':movingLabelDistanceMap.GetID(),'useBSpline':True,'splineGridSize':'3,3,3','numberOfSamples':'10000','costMetric':'MSE','bsplineTransform':bsplineTransformNode.GetID(),'initialTransform':affineTransformNode.GetID()}
-    slicer.cli.run(slicer.modules.brainsfit, None, registrationParameters, wait_for_completion=True)
-    parameterNode.SetAttribute('BSplineTransformNodeID',bsplineTransformNode.GetID())
-    print('bsplineRegistrationCompleted!')
+    # run bspline registration (comment out for experiment)
+    # registrationParameters = {'fixedVolume':fixedLabelDistanceMap.GetID(), 'movingVolume':movingLabelDistanceMap.GetID(),'useBSpline':True,'splineGridSize':'3,3,3','numberOfSamples':'10000','costMetric':'MSE','bsplineTransform':bsplineTransformNode.GetID(),'initialTransform':affineTransformNode.GetID()}
+    # slicer.cli.run(slicer.modules.brainsfit, None, registrationParameters, wait_for_completion=True)
+    # parameterNode.SetAttribute('BSplineTransformNodeID',bsplineTransformNode.GetID())
+    # print('bsplineRegistrationCompleted!')
 
-    # # Compute Similarity Metric before and after transforming moving similarity node
-    # SimilarityMetric = self.ComputeSimilarityMetric(parameterNode) # compute similarity metric b/w fixed and moving similarity
-    # print SimilarityMetric
-    # #self.transformNodeBspline(parameterNode) 
-    # #self.processTransformedNode(parameterNode) 
-    # #self.ComputeSimilarityMetric(parameterNode) # compute similarity metric b/w fixed and moving similarity
+    # Initialize Results CSV file
+    results = []
+    results.append([0,0,self.ComputeSimilarityMetric(fixedSimilarityLabelNode,movingSimilarityLabelNode)]) # compute similarity metric b/w fixed and moving similarity
+    print results
 
+    numSamples = [100] #,100,100,100] #,1000,5000,10000,50000,100000]
+    print numSamples
+
+    # Smooth fixed label prior to looping over registration
+    self.LabelMapSmoothing(fixedSimilarityLabelNode, fixedSimilarityLabelNode, 0.4)
+
+    # Initialize Inputs
+    RegisterTimes = []
+    SimilarityValues = []
+
+    for numSamp in numSamples:
+        newTransformNode = self.CreateNewTransform()
+        register_time, DeformableTransformNode = self.bsplineRegisterNumSamp(fixedLabelDistanceMap,movingLabelDistanceMap,newTransformNode,affineTransformNode,numSamp)
+        newNode = self.CreateNewVolume() # create a new node to transform and compute similarity metric
+        self.LabelMapSmoothing(movingSimilarityLabelNode, newNode, 0.4)
+        self.transformNodewithBspline(newNode, DeformableTransformNode)
+        self.processTransformedNode(newNode)
+        similarityValue = self.ComputeSimilarityMetric(fixedSimilarityLabelNode, newNode)
+        
+        # Append values to variables
+        RegisterTimes.append(register_time)
+        SimilarityValues.append(similarityValue)
+
+    # Print variables to Slicer CLI
+    print results
+    print "Number of Samples",
+    print numSamples
+    print "Reg. Times",
+    print RegisterTimes
+    print "Similarity Values",
+    print SimilarityValues
 
     # Print results to Slicer CLI
     end_time_overall = time.time()
@@ -398,36 +429,81 @@ class CustomRegisterLogic(ScriptedLoadableModuleLogic):
 
     return True
 
-  def transformNodeBspline(self, parameterNode):
-    # tranform input node using bspline transform from registration
-    movingSimilarityLabel  = slicer.util.getNode(parameterNode.GetAttribute('MovingSimilarityLabelNodeID')) # Get Nodes from IDs
-    bsplineTransform       = slicer.mrmlScene.GetNodeByID(self.parameterNode.GetAttribute('BSplineTransformNodeID'))
+  def CreateNewTransform(self):
+    transformNode = slicer.vtkMRMLTransformNode()
+    slicer.mrmlScene.AddNode(transformNode)
+    transformNode.CreateDefaultStorageNode()
 
+    return transformNode
+
+  def CreateNewVolume(self):
+    imageSize=[64, 64, 64]
+    imageSpacing=[1.0, 1.0, 1.0]
+    voxelType=vtk.VTK_UNSIGNED_CHAR
+    # Create an empty image volume
+    imageData=vtk.vtkImageData()
+    imageData.SetDimensions(imageSize)
+    imageData.AllocateScalars(voxelType, 1)
+    thresholder=vtk.vtkImageThreshold()
+    thresholder.SetInputData(imageData)
+    thresholder.SetInValue(0)
+    thresholder.SetOutValue(0)
+    # Create volume node
+    volumeNode=slicer.vtkMRMLScalarVolumeNode()
+    volumeNode.SetSpacing(imageSpacing)
+    volumeNode.SetImageDataConnection(thresholder.GetOutputPort())
+    # Add volume to scene
+    slicer.mrmlScene.AddNode(volumeNode)
+    displayNode=slicer.vtkMRMLScalarVolumeDisplayNode()
+    slicer.mrmlScene.AddNode(displayNode)
+    colorNode = slicer.util.getNode('Grey')
+    displayNode.SetAndObserveColorNodeID(colorNode.GetID())
+    volumeNode.SetAndObserveDisplayNodeID(displayNode.GetID())
+    volumeNode.CreateDefaultStorageNode()
+
+    return volumeNode
+
+  def bsplineRegisterNumSamp(self,fixedLabelDistanceMap,movingLabelDistanceMap,newTransformNode,affineTransformNode,numSamp):
+    """ Performs bspline registration for inputted nodes with inputted number of samples
+    """
+    # Print to Slicer CLI
+    print('Resampling volumes to match ARFI...'),
+    start_time = time.time()
+
+    registrationParameters = {'fixedVolume':fixedLabelDistanceMap.GetID(), 'movingVolume':movingLabelDistanceMap.GetID(),'useBSpline':True,'splineGridSize':'3,3,3','numberOfSamples':str(numSamp),'costMetric':'MSE','bsplineTransform':newTransformNode.GetID(),'initialTransform':affineTransformNode.GetID()}
+    slicer.cli.run(slicer.modules.brainsfit, None, registrationParameters, wait_for_completion=True)
+    print('bsplineRegistrationCompleted!')
+
+    # print to Slicer CLI
+    end_time = time.time()
+    print('done (%0.2f s)') % float(end_time-start_time)
+    print "here"
+
+    return float(end_time-start_time),newTransformNode
+
+  def transformNodewithBspline(self, movingSimilarityLabel, bsplineTransform):
+    # tranform input node using bspline transform from registration
     movingSimilarityLabel.SetAndObserveTransformNodeID(bsplineTransform.GetID())
     slicer.vtkSlicerTransformLogic().hardenTransform(movingSimilarityLabel) # hardens transform
 
-  def processTransformedNode(self, parameterNode):
-    # threshold and smooth hardened transformed node
-    movingSimilarityLabel  = slicer.util.getNode(parameterNode.GetAttribute('MovingSimilarityLabelNodeID')) # Get Nodes from IDs
-    self.ThresholdScalarVolume(movingSimilarityLabel, 20) # set to label value of 20
-    self.LabelMapSmoothing(movingSimilarityLabel, 0.3)
+  def processTransformedNode(self, inputNode):
+    # threshold and smooth an input node
+    self.ThresholdScalarVolume(inputNode, 20) # set to label value of 20
+    self.LabelMapSmoothing(inputNode, inputNode, 0.3)
 
-  def ComputeSimilarityMetric(self, parameterNode):
+  def ComputeSimilarityMetric(self, volumeA, volumeB):
     # Computes the similarity metric for the labels chosen by thew widget
     import SimpleITK as sitk
     import sitkUtils
 
-    fixedSimilarityLabel   = slicer.util.getNode(parameterNode.GetAttribute('FixedSimilarityLabelNodeID')) # Get Nodes from IDs
-    movingSimilarityLabel  = slicer.util.getNode(parameterNode.GetAttribute('MovingSimilarityLabelNodeID')) # Get Nodes from IDs
-
-    fixed_img  = sitk.ReadImage(sitkUtils.GetSlicerITKReadWriteAddress( fixedSimilarityLabel.GetName()))
-    moving_img = sitk.ReadImage(sitkUtils.GetSlicerITKReadWriteAddress(movingSimilarityLabel.GetName()))
-
+    A_img  = sitk.ReadImage(sitkUtils.GetSlicerITKReadWriteAddress( volumeA.GetName()))
+    B_img = sitk.ReadImage(sitkUtils.GetSlicerITKReadWriteAddress(  volumeB.GetName()))
     similarity_filter = sitk.SimilarityIndexImageFilter()
-    similarity_filter.Execute(fixed_img, moving_img)
+    similarity_filter.Execute(A_img, B_img)
+
     return similarity_filter.GetSimilarityIndex()
 
-  def LabelMapSmoothing(self, inputVolume, Sigma, *labelNumber):
+  def LabelMapSmoothing(self, inputVolume, outputVolume, Sigma, *labelNumber):
     """ Smooths an input volume labelmap using value of sigma provided (number from 0-5). Optionally smooths only selected labels if more arguments passed
     """
     # Print to Slicer CLI
@@ -435,7 +511,7 @@ class CustomRegisterLogic(ScriptedLoadableModuleLogic):
     start_time = time.time()
 
     # Run the slicer module in CLI
-    cliParams = {'inputVolume': inputVolume.GetID(), 'outputVolume': inputVolume.GetID(), 'gaussianSigma': Sigma} # input and output defined as same
+    cliParams = {'inputVolume': inputVolume.GetID(), 'outputVolume': outputVolume.GetID(), 'gaussianSigma': Sigma} # input and output defined as same
     if labelNumber:
         cliParams["labelToSmooth"] = labelNumber
 
