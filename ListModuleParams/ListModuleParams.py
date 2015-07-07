@@ -4,10 +4,11 @@ from __main__ import vtk, qt, ctk, slicer
 from slicer.ScriptedLoadableModule import *
 import logging
 
-#
-# ListModuleParams
-#
+### Choose Module to list parameters for
+module_name = slicer.modules.brainsfit
 
+
+### Processing Code
 class ListModuleParams(ScriptedLoadableModule):
   """Uses ScriptedLoadableModule base class, available at:
   https://github.com/Slicer/Slicer/blob/master/Base/Python/slicer/ScriptedLoadableModule.py
@@ -40,7 +41,7 @@ class ListModuleParamsWidget(ScriptedLoadableModuleWidget):
   def setup(self):
     ScriptedLoadableModuleWidget.setup(self)
 
-    cliModule = slicer.modules.modeltolabelmap ### SELECT EXTENSION HERE!
+    cliModule = module_name ### SELECT EXTENSION HERE!
     n=cliModule.cliModuleLogic().CreateNode()
     print '\n'
     print 'Parameter Set for {}:\n'.format(cliModule.name)
