@@ -91,6 +91,22 @@ class CustomRegisterWidget(ScriptedLoadableModuleWidget):
     parametersFormLayout.addRow("Segmentation of the fixed Image: ", self.fixedImageLabelSelector)
 
     #
+    # fixed image label for similarity
+    #
+    self.fixedImageSimilarityLabel = slicer.qMRMLNodeComboBox()
+    self.fixedImageSimilarityLabel.nodeTypes = ( ("vtkMRMLScalarVolumeNode"), "" )
+    self.fixedImageSimilarityLabel.addAttribute( "vtkMRMLScalarVolumeNode", "LabelMap", 1 ) # this one is a labelmap
+    self.fixedImageSimilarityLabel.selectNodeUponCreation = True
+    self.fixedImageSimilarityLabel.addEnabled = False
+    self.fixedImageSimilarityLabel.removeEnabled = False
+    self.fixedImageSimilarityLabel.noneEnabled = False
+    self.fixedImageSimilarityLabel.showHidden = False
+    self.fixedImageSimilarityLabel.showChildNodeTypes = False
+    self.fixedImageSimilarityLabel.setMRMLScene( slicer.mrmlScene )
+    self.fixedImageSimilarityLabel.setToolTip( "Label to compare using Similarity Metric" )
+    parametersFormLayout.addRow("Fixed Image Similarity Label: ", self.fixedImageSimilarityLabel)
+
+    #
     # moving image selector
     #
     self.movingImageSelector = slicer.qMRMLNodeComboBox()
@@ -120,6 +136,23 @@ class CustomRegisterWidget(ScriptedLoadableModuleWidget):
     self.movingImageLabelSelector.setMRMLScene( slicer.mrmlScene )
     self.movingImageLabelSelector.setToolTip( "Segmentation of the moving image" )
     parametersFormLayout.addRow("Segmentation of the moving Image: ", self.movingImageLabelSelector)
+
+    #
+    # moving image label for similarity
+    #
+    self.movingImageSimilarityLabel = slicer.qMRMLNodeComboBox()
+    self.movingImageSimilarityLabel.nodeTypes = ( ("vtkMRMLScalarVolumeNode"), "" )
+    self.movingImageSimilarityLabel.addAttribute( "vtkMRMLScalarVolumeNode", "LabelMap", 1 ) # this one is a labelmap
+    self.movingImageSimilarityLabel.selectNodeUponCreation = True
+    self.movingImageSimilarityLabel.addEnabled = False
+    self.movingImageSimilarityLabel.removeEnabled = False
+    self.movingImageSimilarityLabel.noneEnabled = False
+    self.movingImageSimilarityLabel.showHidden = False
+    self.movingImageSimilarityLabel.showChildNodeTypes = False
+    self.movingImageSimilarityLabel.setMRMLScene( slicer.mrmlScene )
+    self.movingImageSimilarityLabel.setToolTip( "Label to compare using Similarity Metric" )
+    parametersFormLayout.addRow("Moving Image Similarity Label: ", self.movingImageSimilarityLabel)
+
     #
     # Affine output transform selector
     #
@@ -231,20 +264,19 @@ class CustomRegisterWidget(ScriptedLoadableModuleWidget):
   def onApplyButton(self):
     logic = CustomRegisterLogic()
 
-    if self.fixedImageSelector.currentNode():
-      self.parameterNode.SetAttribute('FixedImageNodeID', self.fixedImageSelector.currentNode().GetID())
-    if self.fixedImageLabelSelector.currentNode():
-      self.parameterNode.SetAttribute('FixedLabelNodeID', self.fixedImageLabelSelector.currentNode().GetID())
-    if self.movingImageSelector.currentNode():
-      self.parameterNode.SetAttribute('MovingImageNodeID', self.movingImageSelector.currentNode().GetID())
-    if self.movingImageLabelSelector.currentNode():
-      self.parameterNode.SetAttribute('MovingLabelNodeID', self.movingImageLabelSelector.currentNode().GetID())
-    if self.affineTransformSelector.currentNode():
-      self.parameterNode.SetAttribute('AffineTransformNodeID', self.affineTransformSelector.currentNode().GetID())
-    if self.bsplineTransformSelector.currentNode():
-      self.parameterNode.SetAttribute('BSplineTransformNodeID', self.bsplineTransformSelector.currentNode().GetID())
+    self.parameterNode.SetAttribute('FixedImageNodeID',            self.fixedImageSelector.currentNode().GetID())
+    self.parameterNode.SetAttribute('FixedLabelNodeID',            self.fixedImageLabelSelector.currentNode().GetID())
+    self.parameterNode.SetAttribute('FixedSimilarityLabelNodeID',  self.fixedImageSimilarityLabel.currentNode().GetID())
+
+    self.parameterNode.SetAttribute('MovingImageNodeID',           self.movingImageSelector.currentNode().GetID())
+    self.parameterNode.SetAttribute('MovingLabelNodeID',           self.movingImageLabelSelector.currentNode().GetID())
+    self.parameterNode.SetAttribute('MovingSimilarityLabelNodeID', self.movingImageSimilarityLabel.currentNode().GetID())
+
+    self.parameterNode.SetAttribute('AffineTransformNodeID',       self.affineTransformSelector.currentNode().GetID())
+    self.parameterNode.SetAttribute('BSplineTransformNodeID',      self.bsplineTransformSelector.currentNode().GetID())
 
     logic.run(self.parameterNode)
+    
 
     # configure the GUI
     logic.showResults(self.parameterNode)
@@ -331,18 +363,13 @@ class CustomRegisterLogic(ScriptedLoadableModuleLogic):
     """
     Run the actual algorithm
     """
-
-    '''
-    if not self.isValidInputOutputData(inputVolume, outputVolume):
-      slicer.util.errorDisplay('Input volume is the same as output volume. Choose a different output volume.')
-      return False
-    '''
     
     fixedLabelNodeID      = parameterNode.GetAttribute('FixedLabelNodeID')
     movingLabelNodeID     = parameterNode.GetAttribute('MovingLabelNodeID')
-    
-    # outputVolumeNodeID    = parameterNode.GetAttribute('OutputVolumeNodeID')
 
+    fixedSimilarityLabelNodeID      = parameterNode.GetAttribute('FixedSimilarityLabelNodeID')
+    movingSimilarityLabelNodeID     = parameterNode.GetAttribute('MovingSimilarityLabelNodeID')
+    
     affineTransformNode   = slicer.mrmlScene.GetNodeByID(parameterNode.GetAttribute('AffineTransformNodeID'))
     bsplineTransformNode  = slicer.mrmlScene.GetNodeByID(parameterNode.GetAttribute('BSplineTransformNodeID'))
 
@@ -376,7 +403,7 @@ class CustomRegisterLogic(ScriptedLoadableModuleLogic):
     parameterNode.SetAttribute('AffineTransformNodeID',affineTransformNode.GetID())
     print('affineRegistrationCompleted!')
 
-    # run bspliine registration
+    # run bspline registration
     registrationParameters = {'fixedVolume':fixedLabelDistanceMap.GetID(), 'movingVolume':movingLabelDistanceMap.GetID(),'useBSpline':True,'splineGridSize':'3,3,3','numberOfSamples':'10000','costMetric':'MSE','bsplineTransform':bsplineTransformNode.GetID(),'initialTransform':affineTransformNode.GetID()}
     slicer.cli.run(slicer.modules.brainsfit, None, registrationParameters, wait_for_completion=True)
     parameterNode.SetAttribute('BSplineTransformNodeID',bsplineTransformNode.GetID())
