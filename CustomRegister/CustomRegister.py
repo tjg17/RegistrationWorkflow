@@ -7,6 +7,7 @@ import time
 
 import SimpleITK as sitk
 import sitkUtils
+
 #
 # CustomRegister
 #
@@ -186,31 +187,7 @@ class CustomRegisterWidget(ScriptedLoadableModuleWidget):
     parametersFormLayout.addRow("Registration B-spline Transform: ", self.bsplineTransformSelector)
 
     #
-    # registered volume selector
-    #
-    '''
-    self.outputImageSelector = slicer.qMRMLNodeComboBox()
-    self.outputImageSelector.nodeTypes = ( ("vtkMRMLScalarVolumeNode"), "" )
-    # self.outputImageSelector.nodeTypes = ( ("vtkMRMLLabelMapVolumeNode"), "" )
-    self.outputImageSelector.selectNodeUponCreation = True
-    self.outputImageSelector.addEnabled = True
-    self.outputImageSelector.removeEnabled = True
-    self.outputImageSelector.noneEnabled = True
-    self.outputImageSelector.showHidden = False
-    self.outputImageSelector.showChildNodeTypes = False
-    self.outputImageSelector.baseName = 'Registered Volume'
-    self.outputImageSelector.setMRMLScene( slicer.mrmlScene )
-    self.outputImageSelector.setToolTip( "Registered volume (will be generated only if the moving image was provided)" )
-    parametersFormLayout.addRow("Registered Volume: ", self.outputImageSelector)
-    '''
-
-    #
-    # To be added later: advanced parameters
-    #  registration modes (rigid/affine/bspline), save rigid/affine transforms,
-    #  crop box margin, number of samples, ...
-    #
-    # Add parameter node to facilitate registration from other modules and
-    # command line
+    # Display (before or after transform)
     #
 
     self.registrationModeGroup = qt.QButtonGroup()
@@ -373,14 +350,11 @@ class CustomRegisterLogic(ScriptedLoadableModuleLogic):
     affineTransformNode   = slicer.mrmlScene.GetNodeByID(parameterNode.GetAttribute('AffineTransformNodeID'))
     bsplineTransformNode  = slicer.mrmlScene.GetNodeByID(parameterNode.GetAttribute('BSplineTransformNodeID'))
 
+    # Print to Slicer CLI
     logging.info('Processing started')
     start_time_overall = time.time() # start timer
 
-
     # crop the labels
-    import SimpleITK as sitk
-    import sitkUtils
-
     (bbMin,bbMax) = self.getBoundingBox(fixedLabelNodeID, movingLabelNodeID)
 
     print("Before preprocessing")
@@ -409,12 +383,66 @@ class CustomRegisterLogic(ScriptedLoadableModuleLogic):
     parameterNode.SetAttribute('BSplineTransformNodeID',bsplineTransformNode.GetID())
     print('bsplineRegistrationCompleted!')
 
+    # Compute Similarity Metric after transforming moving similarity node
+    self.transformNodeBspline(parameterNode) 
+    self.processTransformedNode(parameterNode) 
+    self.ComputeSimilarityMetric(parameterNode) # compute similarity metric b/w fixed and moving similarity
+
+
     # Print results to Slicer CLI
     end_time_overall = time.time()
     logging.info('Processing completed')
     print('Overall Algorithm Time: % 0.1f seconds') % float(end_time_overall-start_time_overall)
 
     return True
+
+  def transformNodeBspline(self, parameterNode):
+    # tranform input node using bspline transform from registration
+    movingSimilarityLabel  = slicer.util.getNode(parameterNode.GetAttribute('MovingSimilarityLabelNodeID')) # Get Nodes from IDs
+    bsplineTransform       = slicer.mrmlScene.GetNodeByID(self.parameterNode.GetAttribute('BSplineTransformNodeID'))
+
+    movingSimilarityLabel.SetAndObserveTransformNodeID(bsplineTransform.GetID())
+    slicer.vtkSlicerTransformLogic().hardenTransform(movingSimilarityLabel) # hardens transform
+
+  def processTransformedNode(self, parameterNode):
+    # threshold and smooth hardened transformed node
+    movingSimilarityLabel  = slicer.util.getNode(parameterNode.GetAttribute('MovingSimilarityLabelNodeID')) # Get Nodes from IDs
+    self.ThresholdScalarVolume(movingSimilarityLabel, 20) # set to label value of 20
+    self.LabelMapSmoothing(movingSimilarityLabel, 0.3)
+
+  def LabelMapSmoothing(self, inputVolume, Sigma, *labelNumber):
+    """ Smooths an input volume labelmap using value of sigma provided (number from 0-5). Optionally smooths only selected labels if more arguments passed
+    """
+    # Print to Slicer CLI
+    print('Additional Label Map Smoothing...'),
+    start_time = time.time()
+
+    # Run the slicer module in CLI
+    cliParams = {'inputVolume': inputVolume.GetID(), 'outputVolume': inputVolume.GetID(), 'gaussianSigma': Sigma} # input and output defined as same
+    if labelNumber:
+        cliParams["labelToSmooth"] = labelNumber
+
+    cliNode = slicer.cli.run(slicer.modules.labelmapsmoothing, None, cliParams, wait_for_completion=True)
+    
+    # print to Slicer CLI
+    end_time = time.time()
+    print('done (%0.2f s)') % float(end_time-start_time)
+
+
+  def ThresholdScalarVolume(self, inputVolume, newLabelVal):
+    """ Thresholds nonzero values on an input labelmap volume to the newLabelVal number while leaving all 0 values untouched
+    """
+    # Print to Slicer CLI
+    print('Changing Label Value...'),
+    start_time = time.time()
+
+    # Run the slicer module in CLI
+    cliParams = {'InputVolume': inputVolume.GetID(), 'OutputVolume': inputVolume.GetID(), 'ThresholdType': 'Above', 'ThresholdValue': 0.5, 'OutsideValue': newLabelVal} 
+    cliNode = slicer.cli.run(slicer.modules.thresholdscalarvolume, None, cliParams, wait_for_completion=True)
+    
+    # print to Slicer CLI
+    end_time = time.time()
+    print('done (%0.2f s)') % float(end_time-start_time)
 
   def showResults(self,parameterNode):
     # duplicate moving volume
@@ -470,7 +498,7 @@ class CustomRegisterLogic(ScriptedLoadableModuleLogic):
     # enable transform visualization in-slice and 3d
 
   def makeSurfaceModels(self,parameterNode):
-    fixedLabel = slicer.util.getNode(parameterNode.GetAttribute('FixedLabelNodeID'))
+    fixedLabel  = slicer.util.getNode(parameterNode.GetAttribute('FixedLabelNodeID'))
     movingLabel = slicer.util.getNode(parameterNode.GetAttribute('MovingLabelNodeID'))
 
     # Create surface model for fixed label
