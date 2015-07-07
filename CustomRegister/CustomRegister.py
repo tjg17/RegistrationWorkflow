@@ -390,7 +390,7 @@ class CustomRegisterLogic(ScriptedLoadableModuleLogic):
     results.append([0,0,self.ComputeSimilarityMetric(fixedSimilarityLabelNode,movingSimilarityLabelNode)]) # compute similarity metric b/w fixed and moving similarity
     print results
 
-    numSamples = [100] #,100,100,100] #,1000,5000,10000,50000,100000]
+    numSamples = [100 1000 10000 50000 100000] 
     print numSamples
 
     # Smooth fixed label prior to looping over registration
@@ -408,7 +408,7 @@ class CustomRegisterLogic(ScriptedLoadableModuleLogic):
         self.transformNodewithBspline(newNode, DeformableTransformNode)
         self.processTransformedNode(newNode)
         similarityValue = self.ComputeSimilarityMetric(fixedSimilarityLabelNode, newNode)
-        
+
         # Append values to variables
         RegisterTimes.append(register_time)
         SimilarityValues.append(similarityValue)
@@ -467,17 +467,16 @@ class CustomRegisterLogic(ScriptedLoadableModuleLogic):
     """ Performs bspline registration for inputted nodes with inputted number of samples
     """
     # Print to Slicer CLI
-    print('Resampling volumes to match ARFI...'),
+    print('Running BSpline Registration...'),
     start_time = time.time()
 
     registrationParameters = {'fixedVolume':fixedLabelDistanceMap.GetID(), 'movingVolume':movingLabelDistanceMap.GetID(),'useBSpline':True,'splineGridSize':'3,3,3','numberOfSamples':str(numSamp),'costMetric':'MSE','bsplineTransform':newTransformNode.GetID(),'initialTransform':affineTransformNode.GetID()}
     slicer.cli.run(slicer.modules.brainsfit, None, registrationParameters, wait_for_completion=True)
-    print('bsplineRegistrationCompleted!')
+    print('bsplineRegistrationCompleted!'),
 
     # print to Slicer CLI
     end_time = time.time()
-    print('done (%0.2f s)') % float(end_time-start_time)
-    print "here"
+    print(('(%0.2f s)') % float(end_time-start_time)
 
     return float(end_time-start_time),newTransformNode
 
