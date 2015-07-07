@@ -5,7 +5,7 @@ from slicer.ScriptedLoadableModule import *
 import logging
 
 ### Choose Module to list parameters for
-module_name = slicer.modules.brainsfit
+module_name = slicer.modules.transforms
 
 
 ### Processing Code
