@@ -406,6 +406,12 @@ class CustomRegisterLogic(ScriptedLoadableModuleLogic):
             self.processTransformedNode(newVolumeNode)
             similarityValue = self.ComputeSimilarityMetric(fixedSimilarityLabelNode, newVolumeNode)
 
+            # Print status to CLI
+            print "\n\n===================="
+            print "Trial Number: %i"  % trial
+            print "Sample Number: %i" % numSamp
+            print "====================\n\n"
+
             # Append values to results variables
             NumberofSamples.append(numSamp)
             SimilarityValues.append(similarityValue)
@@ -420,7 +426,7 @@ class CustomRegisterLogic(ScriptedLoadableModuleLogic):
     print SimilarityValues
 
     # Write results to CSV file
-    self.WriteCSVResults('bph-label_numSamp_4trials.csv',NumberofSamples,RegisterTimes,SimilarityValues)
+    self.WriteCSVResults('indexlesion-label_numSamp_5trials.csv',NumberofSamples,RegisterTimes,SimilarityValues)
 
     # Print results to Slicer CLI
     end_time_overall = time.time()
@@ -431,6 +437,7 @@ class CustomRegisterLogic(ScriptedLoadableModuleLogic):
 
   def WriteCSVResults(self,FilenameForTrial,independentVariable,RegisterTimes,SimilarityValues):
     # Writes registration experiment results to CSV
+    import csv
     results = []
     for independentVar, similarityVal, registerTime in zip(independentVariable, RegisterTimes, SimilarityValues):
         results.append([independentVar, similarityVal, registerTime]) # create results variable
@@ -506,6 +513,11 @@ class CustomRegisterLogic(ScriptedLoadableModuleLogic):
 
   def ComputeSimilarityMetric(self, volumeA, volumeB):
     # Computes the similarity metric for the labels chosen by thew widget
+
+    # Print to Slicer CLI
+    print('Computing Similarity Metric...'),
+    start_time = time.time()
+
     import SimpleITK as sitk
     import sitkUtils
 
@@ -513,6 +525,10 @@ class CustomRegisterLogic(ScriptedLoadableModuleLogic):
     B_img = sitk.ReadImage(sitkUtils.GetSlicerITKReadWriteAddress(  volumeB.GetName()))
     similarity_filter = sitk.SimilarityIndexImageFilter()
     similarity_filter.Execute(A_img, B_img)
+
+    # print to Slicer CLI
+    end_time = time.time()
+    print('done (%0.2f s)') % float(end_time-start_time)
 
     return similarity_filter.GetSimilarityIndex()
 
