@@ -388,7 +388,7 @@ class CustomRegisterLogic(ScriptedLoadableModuleLogic):
     # Smooth fixed label prior to looping over registration
     self.LabelMapSmoothing(fixedSimilarityLabelNode, fixedSimilarityLabelNode, 0.4)
 
-    # Initialize Inputs
+    # Initialize Inputs to Experiment
     numSamplestoTry = [1000,10000,50000,100000,200000] 
     NumberofSamples = []
     RegisterTimes = []
