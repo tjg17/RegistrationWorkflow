@@ -386,12 +386,11 @@ class CustomRegisterLogic(ScriptedLoadableModuleLogic):
     # print('bsplineRegistrationCompleted!')
 
     # Initialize Results CSV file
-    results = []
-    results.append([0,0,self.ComputeSimilarityMetric(fixedSimilarityLabelNode,movingSimilarityLabelNode)]) # compute similarity metric b/w fixed and moving similarity
-    print results
+    #results = []
+    #results.append([0,0,self.ComputeSimilarityMetric(fixedSimilarityLabelNode,movingSimilarityLabelNode)]) # compute similarity metric b/w fixed and moving similarity
+    #print results
 
-    numSamples = [100 1000 10000 50000 100000] 
-    print numSamples
+    numSamples = [100,1000,10000,50000,100000] 
 
     # Smooth fixed label prior to looping over registration
     self.LabelMapSmoothing(fixedSimilarityLabelNode, fixedSimilarityLabelNode, 0.4)
@@ -403,18 +402,18 @@ class CustomRegisterLogic(ScriptedLoadableModuleLogic):
     for numSamp in numSamples:
         newTransformNode = self.CreateNewTransform()
         register_time, DeformableTransformNode = self.bsplineRegisterNumSamp(fixedLabelDistanceMap,movingLabelDistanceMap,newTransformNode,affineTransformNode,numSamp)
-        newNode = self.CreateNewVolume() # create a new node to transform and compute similarity metric
-        self.LabelMapSmoothing(movingSimilarityLabelNode, newNode, 0.4)
-        self.transformNodewithBspline(newNode, DeformableTransformNode)
-        self.processTransformedNode(newNode)
-        similarityValue = self.ComputeSimilarityMetric(fixedSimilarityLabelNode, newNode)
+        newVolumeNode = self.CreateNewVolume() # create a new node to transform and compute similarity metric
+        self.LabelMapSmoothing(movingSimilarityLabelNode, newVolumeNode, 0.4)
+        self.transformNodewithBspline(newVolumeNode, DeformableTransformNode)
+        self.processTransformedNode(newVolumeNode)
+        similarityValue = self.ComputeSimilarityMetric(fixedSimilarityLabelNode, newVolumeNode)
 
         # Append values to variables
         RegisterTimes.append(register_time)
         SimilarityValues.append(similarityValue)
 
     # Print variables to Slicer CLI
-    print results
+    # print results
     print "Number of Samples",
     print numSamples
     print "Reg. Times",
@@ -476,9 +475,9 @@ class CustomRegisterLogic(ScriptedLoadableModuleLogic):
 
     # print to Slicer CLI
     end_time = time.time()
-    print(('(%0.2f s)') % float(end_time-start_time)
+    print(('(%0.2f s)')) % float(end_time-start_time)
 
-    return float(end_time-start_time),newTransformNode
+    return float(end_time-start_time), newTransformNode
 
   def transformNodewithBspline(self, movingSimilarityLabel, bsplineTransform):
     # tranform input node using bspline transform from registration
