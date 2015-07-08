@@ -385,41 +385,42 @@ class CustomRegisterLogic(ScriptedLoadableModuleLogic):
     # parameterNode.SetAttribute('BSplineTransformNodeID',bsplineTransformNode.GetID())
     # print('bsplineRegistrationCompleted!')
 
-    # Initialize Results CSV file
-    #results = []
-    #results.append([0,0,self.ComputeSimilarityMetric(fixedSimilarityLabelNode,movingSimilarityLabelNode)]) # compute similarity metric b/w fixed and moving similarity
-    #print results
-
-    numSamples = [100,1000,10000,50000,100000] 
-
     # Smooth fixed label prior to looping over registration
     self.LabelMapSmoothing(fixedSimilarityLabelNode, fixedSimilarityLabelNode, 0.4)
 
     # Initialize Inputs
+    numSamplestoTry = [1000,10000,50000,100000,200000] 
+    NumberofSamples = []
     RegisterTimes = []
     SimilarityValues = []
+    numTrials = 5 # number of trials to run
 
-    for numSamp in numSamples:
-        newTransformNode = self.CreateNewTransform()
-        register_time, DeformableTransformNode = self.bsplineRegisterNumSamp(fixedLabelDistanceMap,movingLabelDistanceMap,newTransformNode,affineTransformNode,numSamp)
-        newVolumeNode = self.CreateNewVolume() # create a new node to transform and compute similarity metric
-        self.LabelMapSmoothing(movingSimilarityLabelNode, newVolumeNode, 0.4)
-        self.transformNodewithBspline(newVolumeNode, DeformableTransformNode)
-        self.processTransformedNode(newVolumeNode)
-        similarityValue = self.ComputeSimilarityMetric(fixedSimilarityLabelNode, newVolumeNode)
+    for trial in range(0,numTrials):
 
-        # Append values to variables
-        RegisterTimes.append(register_time)
-        SimilarityValues.append(similarityValue)
+        for numSamp in numSamplestoTry:
+            newTransformNode = self.CreateNewTransform()
+            register_time, DeformableTransformNode = self.bsplineRegisterNumSamp(fixedLabelDistanceMap,movingLabelDistanceMap,newTransformNode,affineTransformNode,numSamp)
+            newVolumeNode = self.CreateNewVolume() # create a new node to transform and compute similarity metric
+            self.LabelMapSmoothing(movingSimilarityLabelNode, newVolumeNode, 0.4)
+            self.transformNodewithBspline(newVolumeNode, DeformableTransformNode)
+            self.processTransformedNode(newVolumeNode)
+            similarityValue = self.ComputeSimilarityMetric(fixedSimilarityLabelNode, newVolumeNode)
+
+            # Append values to results variables
+            NumberofSamples.append(numSamp)
+            SimilarityValues.append(similarityValue)
+            RegisterTimes.append(register_time)
 
     # Print variables to Slicer CLI
-    # print results
     print "Number of Samples",
-    print numSamples
+    print NumberofSamples
     print "Reg. Times",
     print RegisterTimes
     print "Similarity Values",
     print SimilarityValues
+
+    # Write results to CSV file
+    self.WriteCSVResults('bph-label_numSamp_4trials.csv',NumberofSamples,RegisterTimes,SimilarityValues)
 
     # Print results to Slicer CLI
     end_time_overall = time.time()
@@ -427,6 +428,20 @@ class CustomRegisterLogic(ScriptedLoadableModuleLogic):
     print('Overall Algorithm Time: % 0.1f seconds') % float(end_time_overall-start_time_overall)
 
     return True
+
+  def WriteCSVResults(self,FilenameForTrial,independentVariable,RegisterTimes,SimilarityValues):
+    # Writes registration experiment results to CSV
+    results = []
+    for independentVar, similarityVal, registerTime in zip(independentVariable, RegisterTimes, SimilarityValues):
+        results.append([independentVar, similarityVal, registerTime]) # create results variable
+
+    # Write CSV file from results variable
+    with open(FilenameForTrial, 'wb') as test_file:
+        csv_writer = csv.writer(test_file)
+        for y in range(len(results[0])):
+            csv_writer.writerow([x[y] for x in results])
+
+
 
   def CreateNewTransform(self):
     transformNode = slicer.vtkMRMLTransformNode()
