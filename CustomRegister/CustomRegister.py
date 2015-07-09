@@ -64,11 +64,11 @@ class CustomRegisterWidget(ScriptedLoadableModuleWidget):
     # fixed image selector
     #
     self.fixedImageSelector = slicer.qMRMLNodeComboBox()
-    self.fixedImageSelector.nodeTypes = ( ("vtkMRMLScalarVolumeNode"), "" )
+    self.fixedImageSelector.nodeTypes = ( ("vtkMRMLLabelMapVolumeNode"), "" )
     self.fixedImageSelector.selectNodeUponCreation = True
-    self.fixedImageSelector.addEnabled = True
+    self.fixedImageSelector.addEnabled = False
     self.fixedImageSelector.removeEnabled = False
-    self.fixedImageSelector.noneEnabled = True
+    self.fixedImageSelector.noneEnabled = False
     self.fixedImageSelector.showHidden = False
     self.fixedImageSelector.showChildNodeTypes = False
     self.fixedImageSelector.setMRMLScene( slicer.mrmlScene )
@@ -79,8 +79,7 @@ class CustomRegisterWidget(ScriptedLoadableModuleWidget):
     # fixed image label selector
     #
     self.fixedImageLabelSelector = slicer.qMRMLNodeComboBox()
-    self.fixedImageLabelSelector.nodeTypes = ( ("vtkMRMLScalarVolumeNode"), "" )
-    self.fixedImageLabelSelector.addAttribute( "vtkMRMLScalarVolumeNode", "LabelMap", 1 ) # this one is a labelmap
+    self.fixedImageLabelSelector.nodeTypes = ( ("vtkMRMLLabelMapVolumeNode"), "" )
     self.fixedImageLabelSelector.selectNodeUponCreation = True
     self.fixedImageLabelSelector.addEnabled = False
     self.fixedImageLabelSelector.removeEnabled = False
@@ -95,8 +94,7 @@ class CustomRegisterWidget(ScriptedLoadableModuleWidget):
     # fixed image label 1 for similarity
     #
     self.fixedImageSimilarityLabel1 = slicer.qMRMLNodeComboBox()
-    self.fixedImageSimilarityLabel1.nodeTypes = ( ("vtkMRMLScalarVolumeNode"), "" )
-    self.fixedImageSimilarityLabel1.addAttribute( "vtkMRMLScalarVolumeNode", "LabelMap", 1 ) # this one is a labelmap
+    self.fixedImageSimilarityLabel1.nodeTypes = ( ("vtkMRMLLabelMapVolumeNode"), "" )
     self.fixedImageSimilarityLabel1.selectNodeUponCreation = True
     self.fixedImageSimilarityLabel1.addEnabled = False
     self.fixedImageSimilarityLabel1.removeEnabled = False
@@ -111,8 +109,7 @@ class CustomRegisterWidget(ScriptedLoadableModuleWidget):
     # fixed image label 2 for similarity
     #
     self.fixedImageSimilarityLabel2 = slicer.qMRMLNodeComboBox()
-    self.fixedImageSimilarityLabel2.nodeTypes = ( ("vtkMRMLScalarVolumeNode"), "" )
-    self.fixedImageSimilarityLabel2.addAttribute( "vtkMRMLScalarVolumeNode", "LabelMap", 1 ) # this one is a labelmap
+    self.fixedImageSimilarityLabel2.nodeTypes = ( ("vtkMRMLLabelMapVolumeNode"), "" )
     self.fixedImageSimilarityLabel2.selectNodeUponCreation = True
     self.fixedImageSimilarityLabel2.addEnabled = False
     self.fixedImageSimilarityLabel2.removeEnabled = False
@@ -127,8 +124,7 @@ class CustomRegisterWidget(ScriptedLoadableModuleWidget):
     # fixed image label 3 for similarity
     #
     self.fixedImageSimilarityLabel3 = slicer.qMRMLNodeComboBox()
-    self.fixedImageSimilarityLabel3.nodeTypes = ( ("vtkMRMLScalarVolumeNode"), "" )
-    self.fixedImageSimilarityLabel3.addAttribute( "vtkMRMLScalarVolumeNode", "LabelMap", 1 ) # this one is a labelmap
+    self.fixedImageSimilarityLabel3.nodeTypes = ( ("vtkMRMLLabelMapVolumeNode"), "" )
     self.fixedImageSimilarityLabel3.selectNodeUponCreation = True
     self.fixedImageSimilarityLabel3.addEnabled = False
     self.fixedImageSimilarityLabel3.removeEnabled = False
@@ -143,8 +139,7 @@ class CustomRegisterWidget(ScriptedLoadableModuleWidget):
     # fixed image label 4 for similarity
     #
     self.fixedImageSimilarityLabel4 = slicer.qMRMLNodeComboBox()
-    self.fixedImageSimilarityLabel4.nodeTypes = ( ("vtkMRMLScalarVolumeNode"), "" )
-    self.fixedImageSimilarityLabel4.addAttribute( "vtkMRMLScalarVolumeNode", "LabelMap", 1 ) # this one is a labelmap
+    self.fixedImageSimilarityLabel4.nodeTypes = ( ("vtkMRMLLabelMapVolumeNode"), "" )
     self.fixedImageSimilarityLabel4.selectNodeUponCreation = True
     self.fixedImageSimilarityLabel4.addEnabled = False
     self.fixedImageSimilarityLabel4.removeEnabled = False
@@ -158,11 +153,11 @@ class CustomRegisterWidget(ScriptedLoadableModuleWidget):
     # moving image selector
     #
     self.movingImageSelector = slicer.qMRMLNodeComboBox()
-    self.movingImageSelector.nodeTypes = ( ("vtkMRMLScalarVolumeNode"), "" )
+    self.movingImageSelector.nodeTypes = ( ("vtkMRMLLabelMapVolumeNode"), "" )
     self.movingImageSelector.selectNodeUponCreation = True
     self.movingImageSelector.addEnabled = False
     self.movingImageSelector.removeEnabled = False
-    self.movingImageSelector.noneEnabled = True
+    self.movingImageSelector.noneEnabled = False
     self.movingImageSelector.showHidden = False
     self.movingImageSelector.showChildNodeTypes = False
     self.movingImageSelector.setMRMLScene( slicer.mrmlScene )
@@ -173,8 +168,7 @@ class CustomRegisterWidget(ScriptedLoadableModuleWidget):
     # moving image label selector
     #
     self.movingImageLabelSelector = slicer.qMRMLNodeComboBox()
-    self.movingImageLabelSelector.nodeTypes = ( ("vtkMRMLScalarVolumeNode"), "" )
-    self.movingImageLabelSelector.addAttribute( "vtkMRMLScalarVolumeNode", "LabelMap", 1 ) # this one is a labelmap
+    self.movingImageLabelSelector.nodeTypes = ( ("vtkMRMLLabelMapVolumeNode"), "" )
     self.movingImageLabelSelector.selectNodeUponCreation = True
     self.movingImageLabelSelector.addEnabled = False
     self.movingImageLabelSelector.removeEnabled = False
@@ -189,8 +183,7 @@ class CustomRegisterWidget(ScriptedLoadableModuleWidget):
     # moving image label 1 for similarity
     #
     self.movingImageSimilarityLabel1 = slicer.qMRMLNodeComboBox()
-    self.movingImageSimilarityLabel1.nodeTypes = ( ("vtkMRMLScalarVolumeNode"), "" )
-    self.movingImageSimilarityLabel1.addAttribute( "vtkMRMLScalarVolumeNode", "LabelMap", 1 ) # this one is a labelmap
+    self.movingImageSimilarityLabel1.nodeTypes = ( ("vtkMRMLLabelMapVolumeNode"), "" )
     self.movingImageSimilarityLabel1.selectNodeUponCreation = True
     self.movingImageSimilarityLabel1.addEnabled = False
     self.movingImageSimilarityLabel1.removeEnabled = False
@@ -205,8 +198,7 @@ class CustomRegisterWidget(ScriptedLoadableModuleWidget):
     # moving image label 2 for similarity
     #
     self.movingImageSimilarityLabel2 = slicer.qMRMLNodeComboBox()
-    self.movingImageSimilarityLabel2.nodeTypes = ( ("vtkMRMLScalarVolumeNode"), "" )
-    self.movingImageSimilarityLabel2.addAttribute( "vtkMRMLScalarVolumeNode", "LabelMap", 1 ) # this one is a labelmap
+    self.movingImageSimilarityLabel2.nodeTypes = ( ("vtkMRMLLabelMapVolumeNode"), "" )
     self.movingImageSimilarityLabel2.selectNodeUponCreation = True
     self.movingImageSimilarityLabel2.addEnabled = False
     self.movingImageSimilarityLabel2.removeEnabled = False
@@ -221,8 +213,7 @@ class CustomRegisterWidget(ScriptedLoadableModuleWidget):
     # moving image label 3 for similarity
     #
     self.movingImageSimilarityLabel3 = slicer.qMRMLNodeComboBox()
-    self.movingImageSimilarityLabel3.nodeTypes = ( ("vtkMRMLScalarVolumeNode"), "" )
-    self.movingImageSimilarityLabel3.addAttribute( "vtkMRMLScalarVolumeNode", "LabelMap", 1 ) # this one is a labelmap
+    self.movingImageSimilarityLabel3.nodeTypes = ( ("vtkMRMLLabelMapVolumeNode"), "" )
     self.movingImageSimilarityLabel3.selectNodeUponCreation = True
     self.movingImageSimilarityLabel3.addEnabled = False
     self.movingImageSimilarityLabel3.removeEnabled = False
@@ -237,8 +228,7 @@ class CustomRegisterWidget(ScriptedLoadableModuleWidget):
     # moving image label 4 for similarity
     #
     self.movingImageSimilarityLabel4 = slicer.qMRMLNodeComboBox()
-    self.movingImageSimilarityLabel4.nodeTypes = ( ("vtkMRMLScalarVolumeNode"), "" )
-    self.movingImageSimilarityLabel4.addAttribute( "vtkMRMLScalarVolumeNode", "LabelMap", 1 ) # this one is a labelmap
+    self.movingImageSimilarityLabel4.nodeTypes = ( ("vtkMRMLLabelMapVolumeNode"), "" )
     self.movingImageSimilarityLabel4.selectNodeUponCreation = True
     self.movingImageSimilarityLabel4.addEnabled = False
     self.movingImageSimilarityLabel4.removeEnabled = False
@@ -336,15 +326,15 @@ class CustomRegisterWidget(ScriptedLoadableModuleWidget):
   def onApplyButton(self):
     logic = CustomRegisterLogic()
 
-    self.parameterNode.SetAttribute('FixedImageNodeID',            self.fixedImageSelector.currentNode().GetID())
-    self.parameterNode.SetAttribute('FixedLabelNodeID',            self.fixedImageLabelSelector.currentNode().GetID())
+    self.parameterNode.SetAttribute('FixedImageNodeID',             self.fixedImageSelector.currentNode().GetID())
+    self.parameterNode.SetAttribute('FixedLabelNodeID',             self.fixedImageLabelSelector.currentNode().GetID())
     self.parameterNode.SetAttribute('FixedSimilarityLabel1NodeID',  self.fixedImageSimilarityLabel1.currentNode().GetID())
     self.parameterNode.SetAttribute('FixedSimilarityLabel2NodeID',  self.fixedImageSimilarityLabel2.currentNode().GetID())
     self.parameterNode.SetAttribute('FixedSimilarityLabel3NodeID',  self.fixedImageSimilarityLabel3.currentNode().GetID())
     self.parameterNode.SetAttribute('FixedSimilarityLabel4NodeID',  self.fixedImageSimilarityLabel4.currentNode().GetID())
 
-    self.parameterNode.SetAttribute('MovingImageNodeID',           self.movingImageSelector.currentNode().GetID())
-    self.parameterNode.SetAttribute('MovingLabelNodeID',           self.movingImageLabelSelector.currentNode().GetID())
+    self.parameterNode.SetAttribute('MovingImageNodeID',            self.movingImageSelector.currentNode().GetID())
+    self.parameterNode.SetAttribute('MovingLabelNodeID',            self.movingImageLabelSelector.currentNode().GetID())
     self.parameterNode.SetAttribute('MovingSimilarityLabel1NodeID', self.movingImageSimilarityLabel1.currentNode().GetID())
     self.parameterNode.SetAttribute('MovingSimilarityLabel2NodeID', self.movingImageSimilarityLabel2.currentNode().GetID())
     self.parameterNode.SetAttribute('MovingSimilarityLabel3NodeID', self.movingImageSimilarityLabel3.currentNode().GetID())
@@ -453,9 +443,9 @@ class CustomRegisterLogic(ScriptedLoadableModuleLogic):
     fixedSimilarityLabel4NodeID      = parameterNode.GetAttribute('FixedSimilarityLabel4NodeID')
 
     movingSimilarityLabel1NodeID     = parameterNode.GetAttribute('MovingSimilarityLabel1NodeID')
-    movingSimilarityLabel2NodeID     = parameterNode.GetAttribute('MovingSimilarityLabel1NodeID')
-    movingSimilarityLabel3NodeID     = parameterNode.GetAttribute('MovingSimilarityLabel1NodeID')
-    movingSimilarityLabel4NodeID     = parameterNode.GetAttribute('MovingSimilarityLabel1NodeID')
+    movingSimilarityLabel2NodeID     = parameterNode.GetAttribute('MovingSimilarityLabel2NodeID')
+    movingSimilarityLabel3NodeID     = parameterNode.GetAttribute('MovingSimilarityLabel3NodeID')
+    movingSimilarityLabel4NodeID     = parameterNode.GetAttribute('MovingSimilarityLabel4NodeID')
 
 
     fixedSimilarityLabel1Node        = slicer.util.getNode( fixedSimilarityLabel1NodeID)
@@ -511,19 +501,19 @@ class CustomRegisterLogic(ScriptedLoadableModuleLogic):
     self.LabelMapSmoothing(fixedSimilarityLabel4Node, fixedSimilarityLabel4Node, 0.4)
 
     # Initialize Inputs to Experiment
-    numSamplestoTry = [100]
-    numTrials = 2 # number of trials to run
+    numSamplestoTry = [100,500,1000,5000,10000,25000,50000,100000]
+    numTrials = 10 # number of trials to run
     LabelTypes = ['registerlabel','bph1','bph2','indexlesion'] # 4 similarity labels are inputted
-    CSV_filename = 'combined_experiment.csv'
+    CSV_filename = 'combined_experiment_10trials.csv'
 
     # Initialize Variables
-    NumberofSamples = []
-    RegisterTimes = []
+    NumberofSamples  = []
+    RegisterTimes    = []
     SimilarityLabel1 = []
     SimilarityLabel2 = []
     SimilarityLabel3 = []
     SimilarityLabel4 = []
-    Trial_Number = []
+    Trial_Number     = []
     
     # Loop for experiment
     for trial in range(0,numTrials):
@@ -531,34 +521,34 @@ class CustomRegisterLogic(ScriptedLoadableModuleLogic):
         for numSamp in numSamplestoTry:
 
             # Run registration to get bspline transform 
-            newTransformNode = self.CreateNewTransform()
+            newTransformNode = self.CreateNewTransform(trial_num,numSamp)
             register_time, DeformableTransformNode = self.bsplineRegisterNumSamp(fixedLabelDistanceMap,movingLabelDistanceMap,newTransformNode,affineTransformNode,numSamp)
 
 
             # Apply transform to moving volume similarity nodes and compute similarity metric
             newVolumeNode = self.CreateNewVolume(trial_num,numSamp,LabelTypes[0]) # create a new node to transform and compute similarity metric
-            self.LabelMapSmoothing(movingSimilarityLabelNode, newVolumeNode, 0.4)
+            self.LabelMapSmoothing(movingSimilarityLabel1Node, newVolumeNode, 0.4)
             self.transformNodewithBspline(newVolumeNode, DeformableTransformNode)
             self.processTransformedNode(newVolumeNode)
-            similarityValue1 = self.ComputeSimilarityMetric(fixedSimilarityLabelNode1, newVolumeNode)
+            similarityValue1 = self.ComputeSimilarityMetric(fixedSimilarityLabel1Node, newVolumeNode)
 
             newVolumeNode = self.CreateNewVolume(trial_num,numSamp,LabelTypes[1]) # create a new node to transform and compute similarity metric
-            self.LabelMapSmoothing(movingSimilarityLabelNode, newVolumeNode, 0.4)
+            self.LabelMapSmoothing(movingSimilarityLabel2Node, newVolumeNode, 0.4)
             self.transformNodewithBspline(newVolumeNode, DeformableTransformNode)
             self.processTransformedNode(newVolumeNode)
-            similarityValue2 = self.ComputeSimilarityMetric(fixedSimilarityLabelNode2, newVolumeNode)
+            similarityValue2 = self.ComputeSimilarityMetric(fixedSimilarityLabel2Node, newVolumeNode)
 
             newVolumeNode = self.CreateNewVolume(trial_num,numSamp,LabelTypes[2]) # create a new node to transform and compute similarity metric
-            self.LabelMapSmoothing(movingSimilarityLabelNode, newVolumeNode, 0.4)
+            self.LabelMapSmoothing(movingSimilarityLabel3Node, newVolumeNode, 0.4)
             self.transformNodewithBspline(newVolumeNode, DeformableTransformNode)
             self.processTransformedNode(newVolumeNode)
-            similarityValue3 = self.ComputeSimilarityMetric(fixedSimilarityLabelNode3, newVolumeNode)
+            similarityValue3 = self.ComputeSimilarityMetric(fixedSimilarityLabel3Node, newVolumeNode)
 
             newVolumeNode = self.CreateNewVolume(trial_num,numSamp,LabelTypes[3]) # create a new node to transform and compute similarity metric
-            self.LabelMapSmoothing(movingSimilarityLabelNode, newVolumeNode, 0.4)
+            self.LabelMapSmoothing(movingSimilarityLabel4Node, newVolumeNode, 0.4)
             self.transformNodewithBspline(newVolumeNode, DeformableTransformNode)
             self.processTransformedNode(newVolumeNode)
-            similarityValue4 = self.ComputeSimilarityMetric(fixedSimilarityLabelNode4, newVolumeNode)
+            similarityValue4 = self.ComputeSimilarityMetric(fixedSimilarityLabel4Node, newVolumeNode)
 
             # Append values to results variables
             Trial_Number.append(trial_num)
