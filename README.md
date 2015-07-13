@@ -13,37 +13,75 @@ To use this extension for the  first time:
 
 Example Output to Slicer Command Line Interface of this extension:  
 
-Processing started  
-Expected Algorithm Time: 95 seconds  
-Centering volume... done (0.17 s)  
-Transforming Ultrasound input... done (0.06 s)  
-Smoothing label volume... done (2.25 s)  
-Creating MR Model... done (1.94 s)  
-Translating MRI inputs to U/S capsule... done (0.09 s)  
-Creating MR Model... done (0.49 s)  
-Converting Model to Label Map... done (3.57 s)  
-Converting Model to Label Map... done (3.36 s)  
-Smoothing label volume... done (2.09 s)  
-Smoothing label volume... done (2.11 s)  
-Smoothing label volume... done (2.33 s)  
-Smoothing label volume... done (2.16 s)  
-Resampling volumes to match ARFI... done (13.59 s)  
-Converting Model to Label Map... done (37.55 s)  
-Additional Label Map Smoothing... done (7.71 s)  
-Additional Label Map Smoothing... done (4.55 s)  
-Additional Label Map Smoothing... done (5.56 s)  
-Additional Label Map Smoothing... done (3.83 s)  
-Changing Label Value... done (0.13 s)  
-Changing Label Value... done (0.13 s)  
-Changing Label Value... done (0.13 s)  
-Changing Label Value... done (0.13 s)  
-Changing Label Value... done (0.11 s)  
-Removing unnecessary nodes from MRML scene... done (0.08 s)  
-Removing unnecessary nodes from MRML scene... done (0.09 s)  
-Saving Ultrasound Results... done (5.14 s)  
-Saving MRI Results... done (4.76 s)  
-Saving MRML Scene... done (2.10 s)  
-Processing completed  
-Overall Algorithm Time:  94.2 seconds  
-Overall Saving Time:  12.0 seconds  
-Overall Elapsed Time:  106.2 seconds  
+Processing started
+Expected Algorithm Time: 270 seconds
+Loading Ultrasound Inputs... done (4.75 s)
+Preallocating Ultrasound Outputs... done (0.04 s)
+Loading MRI Inputs... done (4.58 s)
+Preallocating MRI Outputs... done (0.04 s)
+Centering volume... done (0.01 s)
+Transforming Ultrasound input... done (0.02 s)
+Smoothing label volume... done (1.65 s)
+Creating MR Model... done (1.97 s)
+Translating MRI inputs to U/S capsule... vtkMatrix4x4 (0x11b8aec0)
+  Debug: Off
+  Modified Time: 1497898
+  Reference Count: 1
+  Registered Events: (none)
+  Elements:
+    1 0 0 -8.38625 
+    0 1 0 -13.1587 
+    0 0 1 11.5093 
+    0 0 0 1 
+
+
+done (0.02 s)
+Creating MRI Model... Changing Label Value... done (0.05 s)
+done (0.65 s)
+Creating MRI Model... Changing Label Value... done (0.13 s)
+done (2.26 s)
+Converting Model to Label Map... done (4.31 s)
+Converting Model to Label Map... done (4.03 s)
+Smoothing label volume... done (2.08 s)
+Smoothing label volume... done (2.17 s)
+Smoothing label volume... done (2.32 s)
+Smoothing label volume... done (2.12 s)
+Resampling volumes to match ARFI... done (14.49 s)
+Additional Label Map Smoothing... done (14.06 s)
+Additional Label Map Smoothing... done (10.08 s)
+Additional Label Map Smoothing... done (5.44 s)
+Additional Label Map Smoothing... done (3.95 s)
+Converting Model to Label Map... done (57.17 s)
+Converting Model to Label Map... done (43.56 s)
+Converting Model to Label Map... done (43.46 s)
+Converting Model to Label Map... done (43.52 s)
+Creating Registration Label... Changing Label Value... done (0.11 s)
+Changing Label Value... done (0.11 s)
+Changing Label Value... done (0.11 s)
+Combining Labels... done (0.55 s)
+Thresholding Label Value... done (0.21 s)
+Thresholding Label Value... done (0.11 s)
+Combining Labels... done (0.46 s)
+done (1.65 s)
+Creating Registration Label... Changing Label Value... done (0.11 s)
+Changing Label Value... done (0.11 s)
+Changing Label Value... done (0.11 s)
+Combining Labels... done (0.53 s)
+Thresholding Label Value... done (0.21 s)
+Thresholding Label Value... done (0.11 s)
+Combining Labels... done (0.44 s)
+done (1.61 s)
+Changing Label Value... done (0.11 s)
+Changing Label Value... done (0.11 s)
+Changing Label Value... done (0.12 s)
+Changing Label Value... done (0.11 s)
+Changing Label Value... done (0.14 s)
+Changing Label Value... done (0.11 s)
+Changing Label Value... done (0.11 s)
+Changing Label Value... done (0.11 s)
+Changing Label Value... done (0.11 s)
+Changing Label Value... done (0.11 s)
+Changing Label Value... done (0.13 s)
+Processing completed
+Overall Algorithm Time:  273.3 seconds
+Overall Elapsed Time:  273.3 seconds
