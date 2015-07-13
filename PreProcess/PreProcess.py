@@ -214,18 +214,18 @@ class PreProcessLogic(ScriptedLoadableModuleLogic):
     end_time = time.time()
     print('done (%0.2f s)') % float(end_time-start_time)
 
-  def ModelToLabelMap(self, inputVolume, inputModel, outputVolume):
-    """ Converts models into a labelmap on the input T2-MRI volume using 0.25 sample distance to be smaller than MRI smallest pixel width
+  def ModelToLabelMap(self, inputVolume, inputModel, outputVolume, sampleDistance):
+    """ Converts models into a labelmap on the input T2-MRI volume using sample distance  provided(smaller than smallest pixel width in input volume)
     """
     # Print to Slicer CLI
     print('Converting Model to Label Map...'),
     start_time = time.time()
 
     # Get spacing of inputVolume and multiply by 0.8 to determine sample distance
-    samplevoxeldistance = round(0.8*min(inputVolume.GetSpacing()),2) # rounds to 2 decimal points for 80% of smallest voxel
+    # samplevoxeldistance = round(0.8*min(inputVolume.GetSpacing()),2) # rounds to 2 decimal points for 80% of smallest voxel
 
     # Run the slicer module in CLI
-    cliParams = {'InputVolume': inputVolume.GetID(), 'surface': inputModel.GetID(), 'OutputVolume': outputVolume.GetID(), 'sampleDistance': samplevoxeldistance, 'labelValue': 10}
+    cliParams = {'InputVolume': inputVolume.GetID(), 'surface': inputModel.GetID(), 'OutputVolume': outputVolume.GetID(), 'sampleDistance': sampleDistance, 'labelValue': 10}
     cliNode = slicer.cli.run(slicer.modules.modeltolabelmap, None, cliParams, wait_for_completion=True)
     
     # print to Slicer CLI
@@ -310,6 +310,7 @@ class PreProcessLogic(ScriptedLoadableModuleLogic):
     parameters["EndLabel"] = -1
     parameters["Decimate"] = 0.1
     parameters["Smooth"] = int(smoothingValue) # make sure it is an integer
+    parameters["Pad"] = True
     parameters["Name"] = 'model'
 
     # # Need to create new model heirarchy node for models to enter the scene
@@ -517,6 +518,24 @@ class PreProcessLogic(ScriptedLoadableModuleLogic):
     end_time = time.time()
     print('done (%0.2f s)') % float(end_time-start_time)
 
+  def MRVMLabelValueProcess(self, inputVolume):
+    """ Inverts zero and nonzero label values for a labelmap """
+    # Print to Slicer CLI
+    print('Thresholding Label Value...'),
+    start_time = time.time()
+
+    # Turn zero values into 3
+    cliParams = {'InputVolume': inputVolume.GetID(), 'OutputVolume': inputVolume.GetID(), 'ThresholdType': 'Above', 'ThresholdValue': 0.5, 'OutsideValue': 3, 'Negate': True} 
+    cliNode = slicer.cli.run(slicer.modules.thresholdscalarvolume, None, cliParams, wait_for_completion=True)
+
+    # Turn values of above 5 into 0
+    cliParams = {'InputVolume': inputVolume.GetID(), 'OutputVolume': inputVolume.GetID(), 'ThresholdType': 'Above', 'ThresholdValue': 5, 'OutsideValue': 0} 
+    cliNode = slicer.cli.run(slicer.modules.thresholdscalarvolume, None, cliParams, wait_for_completion=True)
+    
+    # print to Slicer CLI
+    end_time = time.time()
+    print('done (%0.2f s)') % float(end_time-start_time)
+
   def SaveUSRegistrationInputs(self, PatientNumber, inputARFI,  inputBmode,  inputCC, outputUSCaps_Seg,  outputUSCG_Seg, outputUSVM_Seg, outputUSIndex_Seg, outputUSRegister_Label):
     """ Saves Ultrasound volumes and labelmaps after preprocessing prior to registration
     """
@@ -564,27 +583,6 @@ class PreProcessLogic(ScriptedLoadableModuleLogic):
     slicer.util.saveNode(outputMRIndex_Seg,      (root+PatientNumber+inputspath+'mr_indexlesion-label.nrrd'))
     slicer.util.saveNode(outputMRRegister_Label, (root+PatientNumber+inputspath+'mr_registration-label.nrrd'))
 
-
-    # print to Slicer CLI
-    end_time = time.time()
-    print('done (%0.2f s)') % float(end_time-start_time)
-
-    # Return time elapsed
-    return float(end_time-start_time)
-
-  def saveScene(self, PatientNumber):
-    """ Saves MRML scene
-    """
-    # Print to Slicer CLI
-    print('Saving MRML Scene...'),
-    start_time = time.time()
-
-    # Define filepath    
-    root = '/luscinia/ProstateStudy/invivo/Patient'
-    inputspath = '/Registration/RegistrationInputs/'
-
-    # Save MRI Files
-    slicer.util.saveScene(root+PatientNumber+inputspath+PatientNumber+'_RegistrationInputScene.mrml')
 
     # print to Slicer CLI
     end_time = time.time()
@@ -809,8 +807,8 @@ class PreProcessLogic(ScriptedLoadableModuleLogic):
     inputMRVM_Model    = self.MRModelMaker(inputMRVM_Seg,    30) # smooth 30
 
     # Convert US Capsule and CG models to labelmap on T2 volume (use T2 for faster conversion since larger image spacing)
-    self.ModelToLabelMap(inputT2, inputUSCaps_Model, outputUSCaps_Seg)
-    self.ModelToLabelMap(inputT2, inputUSCG_Model, outputUSCG_Seg)
+    self.ModelToLabelMap(inputT2, inputUSCaps_Model, outputUSCaps_Seg, 0.25)
+    self.ModelToLabelMap(inputT2, inputUSCG_Model, outputUSCG_Seg, 0.25)
 
     # Use Segmentation Smoothing Module on US and MRI Capsule and US CG labels
     self.SegmentationSmoothing(outputUSCaps_Seg, outputUSCaps_Seg) # (inputVolume, outputVolume)
@@ -830,12 +828,15 @@ class PreProcessLogic(ScriptedLoadableModuleLogic):
     self.LabelMapSmoothing(outputMRCG_Seg,   1)
 
     # Model to labelmap for veramontanum models (** LONG STEP **)
-    self.ModelToLabelMap(inputARFI, inputUSVM_Model, outputUSVM_Seg)
-    self.ModelToLabelMap(inputT2,   inputMRVM_Model, outputMRVM_Seg)
+    self.ModelToLabelMap(inputARFI, inputUSVM_Model, outputUSVM_Seg, 0.1)
+    self.ModelToLabelMap(inputARFI, inputMRVM_Model, outputMRVM_Seg, 0.1)
 
     # Model to labelmap for tumor models for ARFI and MRI (** LONG STEP **)
-    self.ModelToLabelMap(inputARFI, inputUSIndex_Model, outputUSIndex_Seg)
-    self.ModelToLabelMap(inputT2,   inputMRIndex_Model, outputMRIndex_Seg)
+    self.ModelToLabelMap(inputARFI, inputUSIndex_Model, outputUSIndex_Seg, 0.1)
+    self.ModelToLabelMap(inputARFI, inputMRIndex_Model, outputMRIndex_Seg, 0.1)
+
+    # Change Label Value for MRI registration label
+    self.MRVMLabelValueProcess(outputMRVM_Seg)
     
     ### Change label map values for output labels before saving
     # For Ultrasound
@@ -863,8 +864,7 @@ class PreProcessLogic(ScriptedLoadableModuleLogic):
     if SaveDataBool:
         US_savetime = self.SaveUSRegistrationInputs(PatientNumber, inputARFI,   inputBmode,  inputCC, outputUSCaps_Seg, outputUSCG_Seg, outputUSVM_Seg, outputUSIndex_Seg, outputUSRegister_Label)
         MR_savetime = self.SaveMRRegistrationInputs(PatientNumber, inputT2,                           outputMRCaps_Seg, outputMRCG_Seg, outputMRVM_Seg, outputMRIndex_Seg, outputMRRegister_Label)
-        scene_savetime = self.saveScene(PatientNumber)
-        total_savetime = US_savetime + MR_savetime + scene_savetime
+        total_savetime = US_savetime + MR_savetime
     else:
         total_savetime = 0
         
