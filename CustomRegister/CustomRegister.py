@@ -60,20 +60,20 @@ class CustomRegisterWidget(ScriptedLoadableModuleWidget):
     # Layout within the dummy collapsible button
     parametersFormLayout = qt.QFormLayout(parametersCollapsibleButton)
 
-    #
-    # fixed image selector
-    #
-    self.fixedImageSelector = slicer.qMRMLNodeComboBox()
-    self.fixedImageSelector.nodeTypes = ( ("vtkMRMLLabelMapVolumeNode"), "" )
-    self.fixedImageSelector.selectNodeUponCreation = True
-    self.fixedImageSelector.addEnabled = False
-    self.fixedImageSelector.removeEnabled = False
-    self.fixedImageSelector.noneEnabled = False
-    self.fixedImageSelector.showHidden = False
-    self.fixedImageSelector.showChildNodeTypes = False
-    self.fixedImageSelector.setMRMLScene( slicer.mrmlScene )
-    self.fixedImageSelector.setToolTip( "Fixed image (optional)" )
-    parametersFormLayout.addRow("Fixed Image: ", self.fixedImageSelector)
+    # #
+    # # fixed image selector
+    # #
+    # self.fixedImageSelector = slicer.qMRMLNodeComboBox()
+    # self.fixedImageSelector.nodeTypes = ( ("vtkMRMLScalarVolumeNode"), "" )
+    # self.fixedImageSelector.selectNodeUponCreation = True
+    # self.fixedImageSelector.addEnabled = False
+    # self.fixedImageSelector.removeEnabled = False
+    # self.fixedImageSelector.noneEnabled = False
+    # self.fixedImageSelector.showHidden = False
+    # self.fixedImageSelector.showChildNodeTypes = False
+    # self.fixedImageSelector.setMRMLScene( slicer.mrmlScene )
+    # self.fixedImageSelector.setToolTip( "Fixed image (optional)" )
+    # parametersFormLayout.addRow("Fixed Image: ", self.fixedImageSelector)
 
     #
     # fixed image label selector
@@ -149,20 +149,20 @@ class CustomRegisterWidget(ScriptedLoadableModuleWidget):
     self.fixedImageSimilarityLabel4.setMRMLScene( slicer.mrmlScene )
     self.fixedImageSimilarityLabel4.setToolTip( "Label to compare using Similarity Metric" )
     parametersFormLayout.addRow("Fixed Image Similarity Label 4: ", self.fixedImageSimilarityLabel4)
-    #
-    # moving image selector
-    #
-    self.movingImageSelector = slicer.qMRMLNodeComboBox()
-    self.movingImageSelector.nodeTypes = ( ("vtkMRMLLabelMapVolumeNode"), "" )
-    self.movingImageSelector.selectNodeUponCreation = True
-    self.movingImageSelector.addEnabled = False
-    self.movingImageSelector.removeEnabled = False
-    self.movingImageSelector.noneEnabled = False
-    self.movingImageSelector.showHidden = False
-    self.movingImageSelector.showChildNodeTypes = False
-    self.movingImageSelector.setMRMLScene( slicer.mrmlScene )
-    self.movingImageSelector.setToolTip( "Moving image (optional)" )
-    parametersFormLayout.addRow("Moving Image: ", self.movingImageSelector)
+    # #
+    # # moving image selector
+    # #
+    # self.movingImageSelector = slicer.qMRMLNodeComboBox()
+    # self.movingImageSelector.nodeTypes = ( ("vtkMRMLScalarVolumeNode"), "" )
+    # self.movingImageSelector.selectNodeUponCreation = True
+    # self.movingImageSelector.addEnabled = False
+    # self.movingImageSelector.removeEnabled = False
+    # self.movingImageSelector.noneEnabled = False
+    # self.movingImageSelector.showHidden = False
+    # self.movingImageSelector.showChildNodeTypes = False
+    # self.movingImageSelector.setMRMLScene( slicer.mrmlScene )
+    # self.movingImageSelector.setToolTip( "Moving image (optional)" )
+    # parametersFormLayout.addRow("Moving Image: ", self.movingImageSelector)
 
     #
     # moving image label selector
@@ -255,40 +255,40 @@ class CustomRegisterWidget(ScriptedLoadableModuleWidget):
     self.affineTransformSelector.setToolTip( "Registration affine transform" )
     parametersFormLayout.addRow("Registration affine transform: ", self.affineTransformSelector)
 
-    #
-    # B-spline output transform selector
-    #
-    self.bsplineTransformSelector = slicer.qMRMLNodeComboBox()
-    self.bsplineTransformSelector.nodeTypes = ( ("vtkMRMLTransformNode"), "" )
-    self.bsplineTransformSelector.selectNodeUponCreation = True
-    self.bsplineTransformSelector.addEnabled = True
-    self.bsplineTransformSelector.removeEnabled = False
-    self.bsplineTransformSelector.noneEnabled = False
-    self.bsplineTransformSelector.showHidden = False
-    self.bsplineTransformSelector.showChildNodeTypes = False
-    self.bsplineTransformSelector.baseName = 'Deformable Transform'
-    self.bsplineTransformSelector.setMRMLScene( slicer.mrmlScene )
-    self.bsplineTransformSelector.setToolTip( "Registration b-spline transform" )
-    parametersFormLayout.addRow("Registration B-spline Transform: ", self.bsplineTransformSelector)
+    # #
+    # # B-spline output transform selector
+    # #
+    # self.bsplineTransformSelector = slicer.qMRMLNodeComboBox()
+    # self.bsplineTransformSelector.nodeTypes = ( ("vtkMRMLTransformNode"), "" )
+    # self.bsplineTransformSelector.selectNodeUponCreation = True
+    # self.bsplineTransformSelector.addEnabled = True
+    # self.bsplineTransformSelector.removeEnabled = False
+    # self.bsplineTransformSelector.noneEnabled = False
+    # self.bsplineTransformSelector.showHidden = False
+    # self.bsplineTransformSelector.showChildNodeTypes = False
+    # self.bsplineTransformSelector.baseName = 'Deformable Transform'
+    # self.bsplineTransformSelector.setMRMLScene( slicer.mrmlScene )
+    # self.bsplineTransformSelector.setToolTip( "Registration b-spline transform" )
+    # parametersFormLayout.addRow("Registration B-spline Transform: ", self.bsplineTransformSelector)
 
     #
     # Display (before or after transform)
     #
 
-    self.registrationModeGroup = qt.QButtonGroup()
-    self.noRegistrationRadio = qt.QRadioButton('Before registration')
-    self.linearRegistrationRadio = qt.QRadioButton('After linear registration')
-    self.deformableRegistrationRadio = qt.QRadioButton('After deformable registration')
-    self.noRegistrationRadio.setChecked(1)
-    self.registrationModeGroup.addButton(self.noRegistrationRadio,1)
-    self.registrationModeGroup.addButton(self.linearRegistrationRadio,2)
-    self.registrationModeGroup.addButton(self.deformableRegistrationRadio,3)
-    parametersFormLayout.addRow(qt.QLabel("Visualization"))
-    parametersFormLayout.addRow("",self.noRegistrationRadio)
-    parametersFormLayout.addRow("",self.linearRegistrationRadio)
-    parametersFormLayout.addRow("",self.deformableRegistrationRadio)
+    # self.registrationModeGroup = qt.QButtonGroup()
+    # self.noRegistrationRadio = qt.QRadioButton('Before registration')
+    # self.linearRegistrationRadio = qt.QRadioButton('After linear registration')
+    # self.deformableRegistrationRadio = qt.QRadioButton('After deformable registration')
+    # self.noRegistrationRadio.setChecked(1)
+    # self.registrationModeGroup.addButton(self.noRegistrationRadio,1)
+    # self.registrationModeGroup.addButton(self.linearRegistrationRadio,2)
+    # self.registrationModeGroup.addButton(self.deformableRegistrationRadio,3)
+    # parametersFormLayout.addRow(qt.QLabel("Visualization"))
+    # parametersFormLayout.addRow("",self.noRegistrationRadio)
+    # parametersFormLayout.addRow("",self.linearRegistrationRadio)
+    # parametersFormLayout.addRow("",self.deformableRegistrationRadio)
 
-    self.registrationModeGroup.connect('buttonClicked(int)',self.onVisualizationModeClicked)
+    # self.registrationModeGroup.connect('buttonClicked(int)',self.onVisualizationModeClicked)
 
     #
     # Apply Button
@@ -326,14 +326,14 @@ class CustomRegisterWidget(ScriptedLoadableModuleWidget):
   def onApplyButton(self):
     logic = CustomRegisterLogic()
 
-    self.parameterNode.SetAttribute('FixedImageNodeID',             self.fixedImageSelector.currentNode().GetID())
+    # self.parameterNode.SetAttribute('FixedImageNodeID',             self.fixedImageSelector.currentNode().GetID())
     self.parameterNode.SetAttribute('FixedLabelNodeID',             self.fixedImageLabelSelector.currentNode().GetID())
     self.parameterNode.SetAttribute('FixedSimilarityLabel1NodeID',  self.fixedImageSimilarityLabel1.currentNode().GetID())
     self.parameterNode.SetAttribute('FixedSimilarityLabel2NodeID',  self.fixedImageSimilarityLabel2.currentNode().GetID())
     self.parameterNode.SetAttribute('FixedSimilarityLabel3NodeID',  self.fixedImageSimilarityLabel3.currentNode().GetID())
     self.parameterNode.SetAttribute('FixedSimilarityLabel4NodeID',  self.fixedImageSimilarityLabel4.currentNode().GetID())
 
-    self.parameterNode.SetAttribute('MovingImageNodeID',            self.movingImageSelector.currentNode().GetID())
+    # self.parameterNode.SetAttribute('MovingImageNodeID',            self.movingImageSelector.currentNode().GetID())
     self.parameterNode.SetAttribute('MovingLabelNodeID',            self.movingImageLabelSelector.currentNode().GetID())
     self.parameterNode.SetAttribute('MovingSimilarityLabel1NodeID', self.movingImageSimilarityLabel1.currentNode().GetID())
     self.parameterNode.SetAttribute('MovingSimilarityLabel2NodeID', self.movingImageSimilarityLabel2.currentNode().GetID())
@@ -343,7 +343,7 @@ class CustomRegisterWidget(ScriptedLoadableModuleWidget):
 
 
     self.parameterNode.SetAttribute('AffineTransformNodeID',       self.affineTransformSelector.currentNode().GetID())
-    self.parameterNode.SetAttribute('BSplineTransformNodeID',      self.bsplineTransformSelector.currentNode().GetID())
+    # self.parameterNode.SetAttribute('BSplineTransformNodeID',      self.bsplineTransformSelector.currentNode().GetID())
 
     logic.run(self.parameterNode)
     
@@ -459,7 +459,7 @@ class CustomRegisterLogic(ScriptedLoadableModuleLogic):
     movingSimilarityLabel4Node       = slicer.util.getNode(movingSimilarityLabel4NodeID)
     
     affineTransformNode   = slicer.mrmlScene.GetNodeByID(parameterNode.GetAttribute('AffineTransformNodeID'))
-    bsplineTransformNode  = slicer.mrmlScene.GetNodeByID(parameterNode.GetAttribute('BSplineTransformNodeID'))
+    # bsplineTransformNode  = slicer.mrmlScene.GetNodeByID(parameterNode.GetAttribute('BSplineTransformNodeID'))
 
     # Print to Slicer CLI
     logging.info('Processing started')
@@ -501,29 +501,32 @@ class CustomRegisterLogic(ScriptedLoadableModuleLogic):
     self.LabelMapSmoothing(fixedSimilarityLabel4Node, fixedSimilarityLabel4Node, 0.4)
 
     # Initialize Inputs to Experiment
-    numSamplestoTry = [100,500,1000,5000,10000,25000,50000,100000]
-    numTrials = 10 # number of trials to run
-    LabelTypes = ['registerlabel','bph1','bph2','indexlesion'] # 4 similarity labels are inputted
-    CSV_filename = 'combined_experiment_10trials.csv'
+    #=================================================#
+    """ EDIT HERE TO CHANGE EXPERIMENTAL PARAMETERS """
+    numSamplestoTry = [200,400] # sample numbers to try
+    numTrials = 2 # number of trials to run for each sample number
+    # names for the 4 similarity labels inputted to module:
+    LabelTypes = ['registration-label','cg-label','vm-label','indexlesion-label'] 
+    CSV_filename = 'numsamp_200_400_experiment_2trials.csv' # filename for CSV output similarity data (in directory Slicer is running)
+    #=================================================#
 
     # Initialize Variables
-    NumberofSamples  = []
-    RegisterTimes    = []
-    SimilarityLabel1 = []
-    SimilarityLabel2 = []
-    SimilarityLabel3 = []
-    SimilarityLabel4 = []
-    Trial_Number     = []
+    NumberofSamples  = ['Number of Samples']
+    RegisterTimes    = ['Registration Time']
+    SimilarityLabel1 = ['Similarity of '+LabelTypes[0]]
+    SimilarityLabel2 = ['Similarity of '+LabelTypes[1]]
+    SimilarityLabel3 = ['Similarity of '+LabelTypes[2]]
+    SimilarityLabel4 = ['Similarity of '+LabelTypes[3]]
+    Trial_Number     = ['Trial Number']
     
     # Loop for experiment
-    for trial in range(0,numTrials):
-        trial_num = trial+1 # number of trial
-        for numSamp in numSamplestoTry:
+    for numSamp in numSamplestoTry:
+        for trial in range(0,numTrials):
+            trial_num = trial+1 # trial number
 
-            # Run registration to get bspline transform 
+            # Run first BSpline stage for registration
             newTransformNode = self.CreateNewTransform(trial_num,numSamp)
-            register_time, DeformableTransformNode = self.bsplineRegisterNumSamp(fixedLabelDistanceMap,movingLabelDistanceMap,newTransformNode,affineTransformNode,numSamp)
-
+            register_time, DeformableTransformNode = self.bsplineRegisterNumSamp(fixedLabelDistanceMap,movingLabelDistanceMap,newTransformNode,affineTransformNode,numSamp,'3,3,3')
 
             # Apply transform to moving volume similarity nodes and compute similarity metric
             newVolumeNode = self.CreateNewVolume(trial_num,numSamp,LabelTypes[0]) # create a new node to transform and compute similarity metric
@@ -644,14 +647,14 @@ class CustomRegisterLogic(ScriptedLoadableModuleLogic):
 
     return volumeNode
 
-  def bsplineRegisterNumSamp(self,fixedLabelDistanceMap,movingLabelDistanceMap,newTransformNode,affineTransformNode,numSamp):
+  def bsplineRegisterNumSamp(self,fixedLabelDistanceMap,movingLabelDistanceMap,newTransformNode,affineTransformNode,numSampInput,splineGridSizeInput):
     """ Performs bspline registration for inputted nodes with inputted number of samples
     """
     # Print to Slicer CLI
     print('Running BSpline Registration...'),
     start_time = time.time()
 
-    registrationParameters = {'fixedVolume':fixedLabelDistanceMap.GetID(), 'movingVolume':movingLabelDistanceMap.GetID(),'useBSpline':True,'splineGridSize':'3,3,3','numberOfSamples':str(numSamp),'costMetric':'MSE','bsplineTransform':newTransformNode.GetID(),'initialTransform':affineTransformNode.GetID()}
+    registrationParameters = {'fixedVolume':fixedLabelDistanceMap.GetID(), 'movingVolume':movingLabelDistanceMap.GetID(),'useBSpline':True,'splineGridSize':str(splineGridSizeInput),'numberOfSamples':str(numSampInput),'costMetric':'MSE','bsplineTransform':newTransformNode.GetID(),'initialTransform':affineTransformNode.GetID()}
     slicer.cli.run(slicer.modules.brainsfit, None, registrationParameters, wait_for_completion=True)
     print('bsplineRegistrationCompleted!'),
 
@@ -661,9 +664,9 @@ class CustomRegisterLogic(ScriptedLoadableModuleLogic):
 
     return float(end_time-start_time), newTransformNode
 
-  def transformNodewithBspline(self, movingSimilarityLabel, bsplineTransform):
+  def transformNodewithBspline(self, movingSimilarityLabel, BSPLINETransform):
     # tranform input node using bspline transform from registration
-    movingSimilarityLabel.SetAndObserveTransformNodeID(bsplineTransform.GetID())
+    movingSimilarityLabel.SetAndObserveTransformNodeID(BSPLINETransform.GetID())
     slicer.vtkSlicerTransformLogic().hardenTransform(movingSimilarityLabel) # hardens transform
 
   def processTransformedNode(self, inputNode):
