@@ -4,7 +4,7 @@ This repository contains a Python scripted extension for 3D Slicer to process AR
 To use this extension for the  first time:  
 
 1) Clone repository into local directory (e.g. ~/home/user/RegistrationWorkflow)  
-2) Open 3D Slicer version 4.4 or above  
+2) Open 3D Slicer version Nightly build after 6/27/2015  
 3) Select "Extension Wizard" module in search box  
 4) Under "Extension Tools", choose "Select Extension" and choose ~/home/user/RegistrationWorkflow  
 5) When prompted, be sure load all modules and check the "Add selected module to search paths" box.  
