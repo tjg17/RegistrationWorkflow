@@ -4,10 +4,6 @@ from __main__ import vtk, qt, ctk, slicer
 from slicer.ScriptedLoadableModule import *
 import logging
 
-### Choose Module to list parameters for
-module_name = slicer.modules.transforms
-
-
 ### Processing Code
 class ListModuleParams(ScriptedLoadableModule):
   """Uses ScriptedLoadableModule base class, available at:
@@ -41,7 +37,7 @@ class ListModuleParamsWidget(ScriptedLoadableModuleWidget):
   def setup(self):
     ScriptedLoadableModuleWidget.setup(self)
 
-    cliModule = module_name ### SELECT EXTENSION HERE!
+    cliModule = slicer.modules.modelmaker ### SELECT EXTENSION HERE!
     n=cliModule.cliModuleLogic().CreateNode()
     print '\n'
     print 'Parameter Set for {}:\n'.format(cliModule.name)
