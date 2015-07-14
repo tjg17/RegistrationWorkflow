@@ -11,7 +11,7 @@ To use this extension for the  first time:
 6) Modules can be selected by searching in the search box in the toolbar  
 
 
-Example Output to Slicer Command Line Interface of this extension:  
+Example Output to Slicer Command Line Interface for "PreProcess" Module of this extension:  
 
 Processing started  
 Expected Algorithm Time: 270 seconds  
