@@ -104,6 +104,6 @@ Input not present:  /invivo/Patient56/slicer/us_lesion1.vtk
 Input not present:  /invivo/Patient56/MRI_Images/T2/P56_no_PHI.nii.gz  
 Input not present:  /invivo/Patient56/MRI_Images/P56_segmentation_final.nrrd  
 Input not present:  /invivo/Patient56/MRI_Images/Anatomy/P56_zones_seg.nii.gz  
-Input not present:  /invivo/Patient56/MRI_Images/Anatomy/P56_vm_seg.nrrd
-Input not present:  /invivo/Patient56/MRI_Images/Cancer/P56_lesion1_seg.nrrd
-Exiting process. Not all inputs supplied.
+Input not present:  /invivo/Patient56/MRI_Images/Anatomy/P56_vm_seg.nrrd  
+Input not present:  /invivo/Patient56/MRI_Images/Cancer/P56_lesion1_seg.nrrd  
+Exiting process. Not all inputs supplied.  
