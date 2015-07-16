@@ -812,8 +812,8 @@ class PreProcessLogic(ScriptedLoadableModuleLogic):
 
     # Use Segmentation Smoothing Module on US and MRI Capsule and US CG labels
     self.SegmentationSmoothing(outputUSCaps_Seg, outputUSCaps_Seg) # (inputVolume, outputVolume)
-    self.SegmentationSmoothing(outputUSCG_Seg, outputUSCG_Seg) # define input and output as same volume to keep segmentation applied to output
-    self.SegmentationSmoothing(inputMRCaps_Seg, outputMRCaps_Seg)
+    self.SegmentationSmoothing(outputUSCG_Seg,   outputUSCG_Seg) # define input and output as same volume to keep segmentation applied to output
+    self.SegmentationSmoothing(inputMRCaps_Seg,  outputMRCaps_Seg)
 
     # Use Segmentation Smoothing on MRI zones seg to pick out and smooth only central gland values
     self.SegmentationSmoothing(inputMRZones_Seg, outputMRCG_Seg, 9) # label value 9
@@ -836,7 +836,7 @@ class PreProcessLogic(ScriptedLoadableModuleLogic):
     self.ModelToLabelMap(inputARFI, inputMRIndex_Model, outputMRIndex_Seg, 0.1)
 
     # Change Label Value for MRI registration label
-    self.MRVMLabelValueProcess(outputMRVM_Seg)
+    # self.MRVMLabelValueProcess(outputMRVM_Seg)
     
     ### Change label map values for output labels before saving
     # For Ultrasound
