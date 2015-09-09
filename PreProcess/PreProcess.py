@@ -553,7 +553,7 @@ class PreProcessLogic(ScriptedLoadableModuleLogic):
     slicer.util.saveNode(inputCC,                (root+PatientNumber+inputspath+'us_ARFICCMask.nrrd'))
     slicer.util.saveNode(outputUSCaps_Seg,       (root+PatientNumber+inputspath+'us_cap-label.nrrd'))
     slicer.util.saveNode(outputUSCG_Seg,         (root+PatientNumber+inputspath+'us_cg-label.nrrd'))
-    slicer.util.saveNode(outputUSVM_Seg,         (root+PatientNumber+inputspath+'us_vm-label.nrrd'))
+    slicer.util.saveNode(outputUSVM_Seg,         (root+PatientNumber+inputspath+'us_urethra-label.nrrd'))
     slicer.util.saveNode(outputUSIndex_Seg,      (root+PatientNumber+inputspath+'us_indexlesion-label.nrrd'))
     slicer.util.saveNode(outputUSRegister_Label, (root+PatientNumber+inputspath+'us_registration-label.nrrd'))
 
@@ -579,7 +579,7 @@ class PreProcessLogic(ScriptedLoadableModuleLogic):
     slicer.util.saveNode(inputT2,                (root+PatientNumber+inputspath+'mr_T2_AXIAL.nii'))
     slicer.util.saveNode(outputMRCaps_Seg,       (root+PatientNumber+inputspath+'mr_cap-label.nrrd'))
     slicer.util.saveNode(outputMRCG_Seg,         (root+PatientNumber+inputspath+'mr_cg-label.nrrd'))
-    slicer.util.saveNode(outputMRVM_Seg,         (root+PatientNumber+inputspath+'mr_vm-label.nrrd'))
+    slicer.util.saveNode(outputMRVM_Seg,         (root+PatientNumber+inputspath+'mr_urethra-label.nrrd'))
     slicer.util.saveNode(outputMRIndex_Seg,      (root+PatientNumber+inputspath+'mr_indexlesion-label.nrrd'))
     slicer.util.saveNode(outputMRRegister_Label, (root+PatientNumber+inputspath+'mr_registration-label.nrrd'))
 
@@ -624,10 +624,10 @@ class PreProcessLogic(ScriptedLoadableModuleLogic):
     else:
         inputUSCG_Model = '/invivo/Patient'+PatientNumber+'/slicer/us_cg.vtk'
 
-    if slicer.util.loadModel('/luscinia/ProstateStudy/invivo/Patient'+PatientNumber+'/slicer/us_vm.vtk'):
-        inputUSVM_Model = slicer.util.getNode('us_vm')
+    if slicer.util.loadModel('/luscinia/ProstateStudy/invivo/Patient'+PatientNumber+'/slicer/us_urethra.vtk'):
+        inputUSVM_Model = slicer.util.getNode('us_urethra')
     else:
-        inputUSVM_Model = '/invivo/Patient'+PatientNumber+'/slicer/us_vm.vtk'
+        inputUSVM_Model = '/invivo/Patient'+PatientNumber+'/slicer/us_urethra.vtk'
 
     if slicer.util.loadModel('/luscinia/ProstateStudy/invivo/Patient'+PatientNumber+'/slicer/us_lesion1.vtk'):
         inputUSIndex_Model = slicer.util.getNode('us_lesion1')
@@ -663,10 +663,10 @@ class PreProcessLogic(ScriptedLoadableModuleLogic):
     else:
         inputMRZones_Seg = '/invivo/Patient'+PatientNumber+'/MRI_Images/Anatomy/P'+PatientNumber+'_zones_seg.nii.gz'
 
-    if slicer.util.loadLabelVolume('/luscinia/ProstateStudy/invivo/Patient'+PatientNumber+'/MRI_Images/Anatomy/P'+PatientNumber+'_vm_seg.nrrd'):
-        inputMRVM_Seg = slicer.util.getNode('P'+PatientNumber+'_vm_seg')
+    if slicer.util.loadLabelVolume('/luscinia/ProstateStudy/invivo/Patient'+PatientNumber+'/MRI_Images/Anatomy/P'+PatientNumber+'_urethra_seg.nrrd'):
+        inputMRVM_Seg = slicer.util.getNode('P'+PatientNumber+'_urethra_seg')
     else:
-        inputMRVM_Seg = '/invivo/Patient'+PatientNumber+'/MRI_Images/Anatomy/P'+PatientNumber+'_vm_seg.nrrd'
+        inputMRVM_Seg = '/invivo/Patient'+PatientNumber+'/MRI_Images/Anatomy/P'+PatientNumber+'_urethra_seg.nrrd'
 
     if slicer.util.loadLabelVolume('/luscinia/ProstateStudy/invivo/Patient'+PatientNumber+'/MRI_Images/Cancer/P'+PatientNumber+'_lesion1_seg.nrrd'):
         inputMRIndex_Seg = slicer.util.getNode('P'+PatientNumber+'_lesion1_seg')
@@ -708,7 +708,7 @@ class PreProcessLogic(ScriptedLoadableModuleLogic):
 
     outputUSCaps_Seg =       self.CreateNewLabelVolume('us_cap-label')
     outputUSCG_Seg =         self.CreateNewLabelVolume('us_cg-label')
-    outputUSVM_Seg =         self.CreateNewLabelVolume('us_vm-label')
+    outputUSVM_Seg =         self.CreateNewLabelVolume('us_urethra-label')
     outputUSIndex_Seg =      self.CreateNewLabelVolume('us_indexlesion-label')
     outputUSRegister_Label = self.CreateNewLabelVolume('us_registration-label')
 
@@ -728,7 +728,7 @@ class PreProcessLogic(ScriptedLoadableModuleLogic):
 
     outputMRCaps_Seg =       self.CreateNewLabelVolume('mr_cap-label')
     outputMRCG_Seg =         self.CreateNewLabelVolume('mr_cg-label')
-    outputMRVM_Seg =         self.CreateNewLabelVolume('mr_vm-label')
+    outputMRVM_Seg =         self.CreateNewLabelVolume('mr_urethra-label')
     outputMRIndex_Seg =      self.CreateNewLabelVolume('mr_indexlesion-label')
     outputMRRegister_Label = self.CreateNewLabelVolume('mr_registration-label')
 

@@ -503,8 +503,8 @@ class CustomRegisterLogic(ScriptedLoadableModuleLogic):
     # Initialize Inputs to Experiment
     #=================================================#
     """ EDIT HERE TO CHANGE EXPERIMENTAL PARAMETERS """
-    numSamplestoTry = [200,400] # sample numbers to try
-    numTrials = 2 # number of trials to run for each sample number
+    numSamplestoTry = [10000] # sample numbers to try
+    numTrials = 1 # number of trials to run for each sample number
     # names for the 4 similarity labels inputted to module:
     LabelTypes = ['registration-label','cg-label','vm-label','indexlesion-label'] 
     CSV_filename = 'numsamp_200_400_experiment_2trials.csv' # filename for CSV output similarity data (in directory Slicer is running)

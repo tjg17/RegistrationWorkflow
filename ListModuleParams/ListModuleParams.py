@@ -4,6 +4,8 @@ from __main__ import vtk, qt, ctk, slicer
 from slicer.ScriptedLoadableModule import *
 import logging
 
+cliModule = slicer.modules.labelmapsmoothing
+
 ### Processing Code
 class ListModuleParams(ScriptedLoadableModule):
   """Uses ScriptedLoadableModule base class, available at:
@@ -36,8 +38,7 @@ class ListModuleParamsWidget(ScriptedLoadableModuleWidget):
 
   def setup(self):
     ScriptedLoadableModuleWidget.setup(self)
-
-    cliModule = slicer.modules.surfacetoolbox ### SELECT EXTENSION HERE!
+    global cliModule
     n=cliModule.cliModuleLogic().CreateNode()
     print '\n'
     print 'Parameter Set for {}:\n'.format(cliModule.name)
