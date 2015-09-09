@@ -1,10 +1,14 @@
+#
+# Select the module you want to know the parameters for in line 5 of this code
+# 
+
+cliModule = slicer.modules.labelmapsmoothing
+
 import os
 import unittest
 from __main__ import vtk, qt, ctk, slicer
 from slicer.ScriptedLoadableModule import *
 import logging
-
-cliModule = slicer.modules.labelmapsmoothing
 
 ### Processing Code
 class ListModuleParams(ScriptedLoadableModule):
