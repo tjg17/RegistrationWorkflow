@@ -19,7 +19,7 @@ class ListModuleParams(ScriptedLoadableModule):
   def __init__(self, parent):
     ScriptedLoadableModule.__init__(self, parent)
     self.parent.title = "ListModuleParams" # TODO make this more human readable by adding spaces
-    self.parent.categories = ["Custom"]
+    self.parent.categories = ["Prostate"]
     self.parent.dependencies = []
     self.parent.contributors = ["Tyler Glass (Nightingale Lab)"] # replace with "Firstname Lastname (Organization)"
     self.parent.helpText = """
