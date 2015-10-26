@@ -20,7 +20,7 @@ class CustomRegister(ScriptedLoadableModule):
   def __init__(self, parent):
     ScriptedLoadableModule.__init__(self, parent)
     self.parent.title = "CustomRegister"
-    self.parent.categories = ["Custom"]
+    self.parent.categories = ["Prostate"]
     self.parent.dependencies = ['SegmentationSmoothing','QuadEdgeSurfaceMesher']
     self.parent.contributors = ["Andrey Fedorov (BWH), Andras Lasso (Queen's University), Tyler Glass (Nightingale Lab)"]
     self.parent.helpText = """
