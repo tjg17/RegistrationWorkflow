@@ -15,7 +15,7 @@ class LoadUltrasound(ScriptedLoadableModule):
 
   def __init__(self, parent):
     ScriptedLoadableModule.__init__(self, parent)
-    self.parent.title = "LoadUltrasound" # TODO make this more human readable by adding spaces
+    self.parent.title = "Load Ultrasound Dataset"
     self.parent.categories = ["Prostate"]
     self.parent.dependencies = []
     self.parent.contributors = ["John Doe (AnyWare Corp.)"] # replace with "Firstname Lastname (Organization)"
@@ -68,11 +68,24 @@ class LoadUltrasoundWidget(ScriptedLoadableModuleWidget):
     # Layout within the dummy collapsible button
     parametersFormLayout = qt.QFormLayout(parametersCollapsibleButton)
 
-    PatientNumberMethodFrame = qt.QFrame(self.parent)
-    parametersFormLayout.addWidget(PatientNumberMethodFrame)
-    PatientNumberMethodFormLayout = qt.QFormLayout(PatientNumberMethodFrame)
-    PatientNumberIterationsFrame, self.PatientNumberIterationsSpinBox = numericInputFrame(self.parent,"Patient Number:","Tooltip",56,110,1,0)
-    PatientNumberMethodFormLayout.addWidget(PatientNumberIterationsFrame)
+    patientNumberMethodFrame = qt.QFrame(self.parent)
+    parametersFormLayout.addRow(patientNumberMethodFrame)
+    patientNumberMethodFormLayout = qt.QFormLayout(patientNumberMethodFrame)
+
+    dataFrame = qt.QFrame(self.parent)
+    dataFrameLayout = qt.QHBoxLayout()
+    dataFrame.setLayout(dataFrameLayout)
+    dataLabel = qt.QLabel('Data Directory:', dataFrame)
+    dataLabel.setToolTip('Data directory containing "Patient##"')
+    dataFrameLayout.addWidget(dataLabel)
+    self.DataDirectoryButton = ctk.ctkDirectoryButton(self.parent)
+    dataFrameLayout.addWidget(self.DataDirectoryButton)
+    patientNumberMethodFormLayout.addRow(dataFrame)
+
+    patientNumberIterationsFrame, self.PatientNumberIterationsSpinBox = \
+        numericInputFrame(self.parent, "Patient Number:" , "Tooltip", 59, 110,
+                          1, 0)
+    patientNumberMethodFormLayout.addRow(patientNumberIterationsFrame)
 
     # Apply Button
     #
@@ -83,7 +96,7 @@ class LoadUltrasoundWidget(ScriptedLoadableModuleWidget):
 
     # connections
     self.applyButton.connect('clicked(bool)', self.onApplyButton)
-    
+
     # Add vertical spacer
     self.layout.addStretch(1)
 
@@ -98,7 +111,8 @@ class LoadUltrasoundWidget(ScriptedLoadableModuleWidget):
 
   def onApplyButton(self):
     logic = LoadUltrasoundLogic()
-    logic.run(str(int(self.PatientNumberIterationsSpinBox.value)))
+    logic.run(str(int(self.PatientNumberIterationsSpinBox.value)),
+              self.DataDirectoryButton.directory)
 #
 # LoadUltrasoundLogic
 #
@@ -191,32 +205,39 @@ class LoadUltrasoundLogic(ScriptedLoadableModuleLogic):
         # Set input volume origin to the new origin
         inputVolume.SetOrigin(new_origin)
 
-  def run(self, PatientNumber):
+  def run(self, patientNumber, dataDirectory):
     """
     Run the actual algorithm
     """
-    print "\n\n\n\n\n\n\n\n\n"
-    print "===================================="
-    print "Loading Patient %s" % PatientNumber
 
-    slicer.util.loadVolume('/luscinia/ProstateStudy/invivo/Patient'+PatientNumber+'/slicer/ARFI_Norm_HistEq.nii.gz')
+    print("\n\n\n\n\n\n\n")
+    print( "====================================")
+    print("Loading Patient %s" % patientNumber)
+    print("From Directory %s" % dataDirectory)
+
+    inputDir = os.path.join(dataDirectory,
+                            'Patient' + patientNumber,
+                            'Ultrasound')
+    slicer.util.loadVolume(os.path.join(inputDir, 'ARFI_Norm_HistEq.nii.gz'))
     ARFI_vol  = slicer.util.getNode('ARFI_Norm_HistEq')
-    slicer.util.loadVolume('/luscinia/ProstateStudy/invivo/Patient'+PatientNumber+'/slicer/Bmode.nii.gz')
+    slicer.util.loadVolume(os.path.join(inputDir, 'Bmode.nii.gz'))
     Bmode_vol = slicer.util.getNode('Bmode')
 
     # self.CenterVolume(ARFI_vol, Bmode_vol)
 
     # Load JSON for lesions and print to CLI
-    print "Lesion Data for Patient %s:" % PatientNumber
+    print("\nLesion Data for Patient %s:" % patientNumber)
     import json
     from pprint import pprint
 
-    with open('/luscinia/ProstateStudy/invivo/Patient'+PatientNumber+'/ARFI_Lesions.json') as json_data:
+    # from remote_pdb import set_trace; set_trace()
+
+    with open(os.path.join(inputDir, 'ARFI_Lesions.json'), 'r') as json_data:
       d = json.load(json_data)
       json_data.close()
-      print(d)
+      pprint(d)
 
-    print "===================================="
+    print("====================================")
 
     return True
 
