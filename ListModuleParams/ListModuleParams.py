@@ -82,13 +82,8 @@ class ListModuleParamsLogic(ScriptedLoadableModuleLogic):
 
   def run(self,cliModuleName):
     """ Prints parameters of selected module to python terminal in Slicer"""
-    print cliModuleName
-
-    #sm = slicer.modules
 
     cliModule = slicer.util.getModule(cliModuleName)
-
-    #cliModule = slicer.modules.labelmapsmoothing
     n=cliModule.cliModuleLogic().CreateNode()
 
     print '\n'
@@ -96,6 +91,3 @@ class ListModuleParamsLogic(ScriptedLoadableModuleLogic):
     for groupIndex in xrange(0,n.GetNumberOfParameterGroups()):
       for parameterIndex in xrange(0,n.GetNumberOfParametersInGroup(groupIndex)):
         print 'Parameter ({0}/{1}): {2} ({3}) [Default: {4}] [Type: {5}]'.format(groupIndex, parameterIndex, n.GetParameterName(groupIndex, parameterIndex), n.GetParameterLabel(groupIndex, parameterIndex), n.GetParameterDefault(groupIndex, parameterIndex),n.GetParameterType(groupIndex, parameterIndex))
-
-
-
