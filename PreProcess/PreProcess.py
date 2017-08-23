@@ -3,7 +3,19 @@ import unittest
 from __main__ import vtk, qt, ctk, slicer
 from slicer.ScriptedLoadableModule import *
 import logging
-import time # for measuring time of processing steps
+import time 
+
+#
+# This module is used to process and save U/S and MRI inputs prior to registration. 
+# 
+# User selects patient number as well as whether data should be saved for registration
+#
+# U/S inputs include: ARFI, Bmode, CCmap, capsule seg, central gland seg, urethra seg, and index lesion seg
+# MR inputs include: T2, capsule seg, central gland seg, urethra seg, and index lesion seg
+# 
+# Module inputs must be in the invivo/PatientXX/slicer for module to recognize them.
+# Missing inputs are printed to the Slicer CLI (Ctrl+3) with full filepaths
+#
 
 
 def numericInputFrame(parent, label, tooltip, minimum, maximum, step, decimals):
