@@ -4,8 +4,11 @@ from __main__ import vtk, qt, ctk, slicer
 from slicer.ScriptedLoadableModule import *
 import logging
 import time # for measuring time of processing steps
+
 #
 # LoadUltrasound
+#
+# This module is used to laod and view ARFI U/S for a selected patient number chosen by user.
 #
 
 class LoadUltrasound(ScriptedLoadableModule):
