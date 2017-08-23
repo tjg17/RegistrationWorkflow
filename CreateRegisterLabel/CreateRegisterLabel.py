@@ -8,6 +8,9 @@ import time # for measuring time of processing steps
 #
 # CreateRegisterLabel
 #
+# This module can be used to create a registration label prior to registration.
+# The preferred way to create a registration label is via PreProcess() module as this will process all U/S and MRI inputs and segmentations.
+# This is a legacy module that should not need to be used as its functionality is already in PreProcess module.
 
 class CreateRegisterLabel(ScriptedLoadableModule):
   """Uses ScriptedLoadableModule base class, available at:
