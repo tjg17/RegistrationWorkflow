@@ -1,12 +1,14 @@
-#
-# Select the module you want to know the parameters for in line 5 of this code
-# 
-
 import os
 import unittest
 from __main__ import vtk, qt, ctk, slicer
 from slicer.ScriptedLoadableModule import *
 import logging
+
+# 
+# ListModuleParams
+# 
+# This module is a development tool used to list the paramaters for existing slicerCLI modules
+# Change line 89 to choose slicerCLI module that you wish to know parameters for
 
 
 ### Processing Code
