@@ -11,6 +11,12 @@ import sitkUtils
 #
 # CustomRegister
 #
+# This module is used to apply affine and deformable registration to "registration labels" for U/S and MRI volumes.
+# Registration labels must be created using PreProcess() module and then loaded into the Slicer workspace.
+# U/S registration label should be selected as Fixed Volume
+# MRI registration label should be selected as Moving Volume
+# The "similarity labels" can be any segmentation (capsule, lesion, urethra) and are used in the outputted CSV file to show how well registration performs.
+# Affine transform and Deformable transform must be saved and then later applied to MRI T2 volume if user wishes to match T2 information with ARFI
 
 class CustomRegister(ScriptedLoadableModule):
   """Uses ScriptedLoadableModule base class, available at:
